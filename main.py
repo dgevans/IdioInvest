@@ -24,13 +24,15 @@ def get_stdev(rho):
     
 T = 202
 N = 5000
-Para.k = 200
+Para.k = 208
 
 #simulate persistence
 data = {}
 state = np.random.get_state()
 if rank == 0:
     utilities.sendMessage('Starting Persistence')
+    fout = open('persistance.dat','wr')
+    fout.close()
     
 for rho in np.linspace(0.6,0.9,10):
     np.random.set_state(state)
@@ -48,7 +50,7 @@ for rho in np.linspace(0.6,0.9,10):
         data[rho] = (np.vstack(Y.values()),[y[t] for t in range(0,T,50)])
         utilities.sendMessage('Finished persistance: ' + str(0.9))
         
-        fout = open('persistance.dat','rw')
+        fout = open('persistance.dat','wr')
         cPickle.dump(data,fout)
         fout.close()
         
