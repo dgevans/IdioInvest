@@ -29,7 +29,9 @@ Para.k = 200
 #simulate persistence
 data = {}
 state = np.random.get_state()
-utilities.sendMessage('Starting Persistence')
+if rank == 0:
+    utilities.sendMessage('Starting Persistence')
+    
 for rho in np.linspace(0.6,0.9,10):
     np.random.set_state(state)
     Para.sigma_e[:2] = get_stdev(rho)
@@ -49,6 +51,9 @@ for rho in np.linspace(0.6,0.9,10):
         fout = open('persistance.dat','rw')
         cPickle.dump(data,fout)
         fout.close()
+        
+if rank == 0:
+    utilities.sendMessage('Finished Persistence')
     
     
     
