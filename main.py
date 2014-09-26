@@ -49,7 +49,6 @@ for rho in np.linspace(0.6,0.9,10):
         fout = open('persistance.dat','rw')
         cPickle.dump(data,fout)
         fout.close()
-        
-utilities.sendMessage('Finished Persistence')
+    
     
     
