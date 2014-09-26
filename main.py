@@ -8,6 +8,7 @@ import utilities
 from mpi4py import MPI
 import cPickle
 
+simulate.approximate = approximate
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
@@ -30,22 +31,23 @@ data = {}
 state = np.random.get_state()
 for rho in np.linspace(0.6,0.9,10):
     np.random.set_state(state)
-    Para.sigma[:,2] = get_stdev(rho)
-    approximate.calibrate(Para)
+    Para.sigma_e[:2] = get_stdev(rho)
     
     Gamma,Z,Y,Shocks,y = {},{},{},{},{}
     Gamma[0] = np.zeros((N,4))
-
+    
+    steadystate.calibrate(Para)
     ss = steadystate.steadystate(zip(np.zeros((1,4)),np.ones(1)))
     Z[0] = ss.get_Y()[:1]
     
-    simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)    
-    data[rho] = (np.vstack(Y.values()),[y[t] for t in range(0,T,50)])
-    utilities.sendMessage('Finished persistance: ' + str(0.9))
-    
-    fout = open('persistance.dat','rw')
-    cPickle.dump(data,fout)
-    fout.close()
+    simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
+    if rank == 0:    
+        data[rho] = (np.vstack(Y.values()),[y[t] for t in range(0,T,50)])
+        utilities.sendMessage('Finished persistance: ' + str(0.9))
+        
+        fout = open('persistance.dat','rw')
+        cPickle.dump(data,fout)
+        fout.close()
     
     
     
