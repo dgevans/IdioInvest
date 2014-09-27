@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_idioinvest_ramsey as Para
+import calibrations.calibrate_idioinvest_frict as Para
 import approximate_aggstate_noshock as approximate
 import numpy as np
 import simulate_MPI as simulate
@@ -31,10 +31,11 @@ data = {}
 state = np.random.get_state()
 if rank == 0:
     utilities.sendMessage('Starting Persistence')
-    fout = open('persistance.dat','wr')
+    fout = open('persistence_frict.dat','wr')
     fout.close()
     
-for rho in np.linspace(0.6,0.9,10):
+for rho in np.linspace(0.6,0.9,7):
+    print rho
     np.random.set_state(state)
     Para.sigma_e[:2] = get_stdev(rho)
     
@@ -48,9 +49,9 @@ for rho in np.linspace(0.6,0.9,10):
     simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
     if rank == 0:    
         data[rho] = (np.vstack(Y.values()),[y[t] for t in range(0,T,50)])
-        utilities.sendMessage('Finished persistance: ' + str(0.9))
-        
-        fout = open('persistance.dat','wr')
+        message = 'Finished persistance: ' + str(rho)
+        utilities.sendMessage(message)
+        fout = open('persistence_frict.dat','wr')
         cPickle.dump(data,fout)
         fout.close()
         

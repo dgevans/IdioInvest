@@ -278,6 +278,7 @@ def check_extreme(z_i):
     '''
     Checks for extreme positions in the state space
     '''
+    return False
     extreme = False
     if z_i[0] < -3. or z_i[0] > 6.:
         extreme = True

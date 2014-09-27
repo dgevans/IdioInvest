@@ -35,7 +35,7 @@ n_p = 3 #number of parameters
 nZ = 1 # number of aggregate states
 neps = len(sigma_e)
 
-phat = np.array([-0.01,-0.005,0.00])
+phat = np.array([-0.01,-0.005,0.002])
 
 
 

@@ -44,8 +44,10 @@ class steadystate(object):
         '''
         global Y0
         res = root(self.SteadyStateRes,Y0,tol = 1e-14)
+        state = np.random.get_state()
         while not res.success or not check_SS(res.x):
             res = root(self.SteadyStateRes,np.random.rand(nY))
+        np.random.set_state(state)
         Y0 = res.x
         self.Y = res.x
         
