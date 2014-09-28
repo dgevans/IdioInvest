@@ -26,7 +26,7 @@ Gov = 0.17
 
 n = 4 # number of measurability constraints
 nG = 1 # number of aggregate measurability constraints.
-ny = 28 # number of individual controls (m_{t},mu_{t},c_{t},l_{t},rho1_,rho2,phi,x_{t-1},kappa_{t-1}) Note that the forward looking terms are at the end
+ny = 29 # number of individual controls (m_{t},mu_{t},c_{t},l_{t},rho1_,rho2,phi,x_{t-1},kappa_{t-1}) Note that the forward looking terms are at the end
 ne = 8 # number of Expectation Terms (E_t u_{c,t+1}, E_t u_{c,t+1}mu_{t+1} E_{t}x_{t-1 E_t rho_{1,t-1}} [This makes the control x_{t-1},rho_{t-1} indeed time t-1 measuable])
 nY = 11 # Number of aggregates (alpha_1,alpha_2,tau,eta,lambda)
 nz = 4 # Number of individual states (m_{t-1},mu_{t-1})
@@ -35,7 +35,7 @@ n_p = 3 #number of parameters
 nZ = 1 # number of aggregate states
 neps = len(sigma_e)
 
-phat = np.array([-0.01,-0.005,0.002])
+phat = np.array([-0.01,-0.005,0.0005])
 
 
 
@@ -43,7 +43,7 @@ def F(w):
     '''
     Individual first order conditions
     '''
-    logm,muhat,nu_a,nu_e,logc,logl,logk_,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_K,rho2_,rho3_,b_,labor_res,x_,alpha_,kappa_,rho2hat_,rho3hat_,lamb_ = w[:ny] #y
+    logm,muhat,nu_a,nu_e,logc,logl,logk_,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_K,rho2_,rho3_,b_,labor_res,foc_W,x_,alpha_,kappa_,rho2hat_,rho3hat_,lamb_ = w[:ny] #y
     EUc,EUc_r,Ex_,Ek_,EUc_mu,Erho2_,Erho3_,Efoc_k= w[ny:ny+ne] #e
     logK,Alpha_,Alpha2_,W,tau_l,tau_k,Xi,Eta,Kappa_,T,Zeta = w[ny+ne:ny+ne+nY] #Y
     logm_,muhat_,nu_a_,nu_e_= w[ny+ne+nY:ny+ne+nY+nz] #z
@@ -59,10 +59,13 @@ def F(w):
     #    shock = 1.
     psi_hat,dpsi_hat,psi = 0.,0.,0.
     try:
-        if (ad.value(b_) < 0):
+        if (-10.< ad.value(b_) < 0):
             psi_hat = (chi_psi-1.) * b_**2
             dpsi_hat = (chi_psi-1.) * 2 * b_
-            psi = -(chi_psi-1.) * b_**3 
+        if(ad.value(b_) <= -10.):
+            psi_hat = (chi_psi-1.) * 100.
+            dpsi_hat = -(chi_psi-1.) * 0.
+        psi = -psi_hat*b_
     except:
         if (b_ < 0):
             psi_hat = (chi_psi-1.) * b_**2
@@ -119,13 +122,14 @@ def F(w):
     ret[23] = nu_e - (nu_l*nu_e_ + eps_l_p)
     ret[24] = w_e - np.exp(nu_e + eps_l_t)
     ret[25] = b_ - (x_*m_/Alpha_ - k_)
-    ret[26] = lamb_ - (rho2_*W -beta*k_*EUc_mu - Eta)*dpsi_hat
+    ret[26] = lamb_ - ((rho2_ -beta*k_*EUc_mu + beta*Eta*b_)*dpsi_hat*W + beta*Eta*psi_hat*W)
     ret[27] = labor_res - (l*w_e - nl - psi)
+    ret[28] = foc_W - ((1-tau_l)*w_e*l*Uc*mu + (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta +(rho2_/beta -k_*EUc_mu + Eta*b_)*psi_hat  )
     
-    ret[28] = Efoc_k #k_
-    ret[29] = mu_  - EUc_mu/EUc - m_*lamb_/Alpha_#muhat
-    ret[30] = Alpha_ - beta*Ri_*m_*EUc #rho2_
-    ret[31] = Alpha_ - beta*(1-tau_k)*m_*EUc_r #rho3
+    ret[29] = Efoc_k #k_
+    ret[30] = mu_  - EUc_mu/EUc - m_*lamb_/Alpha_#muhat
+    ret[31] = Alpha_ - beta*Ri_*m_*EUc #rho2_
+    ret[32] = Alpha_ - beta*(1-tau_k)*m_*EUc_r #rho3
     
     return ret
     
@@ -133,7 +137,7 @@ def G(w):
     '''
     Aggregate equations
     '''
-    logm,muhat,nu_a,nu_e,logc,logl,logk_,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_K,rho2_,rho3_,b_,labor_res,x_,alpha_,kappa_,rho2hat_,rho3hat_,lamb_ = w[:ny] #y
+    logm,muhat,nu_a,nu_e,logc,logl,logk_,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_K,rho2_,rho3_,b_,labor_res,foc_W,x_,alpha_,kappa_,rho2hat_,rho3hat_,lamb_ = w[:ny] #y
     logK,Alpha_,Alpha2_,W,tau_l,tau_k,Xi,Eta,Kappa_,T,Zeta = w[ny+ne:ny+ne+nY] #Y
     logm_,muhat_,nu_a_,nu_e_= w[ny+ne+nY:ny+ne+nY+nz] #z
     logK_ = w[ny+ne+nY+nz+nv+n_p+nZ-1] #Z
@@ -154,10 +158,10 @@ def G(w):
     ret[4] = pi*mu*Uc + rho3_/beta + pi*Zeta
     ret[5] = W*w_e*l*Uc*mu + phi1 + W*w_e*l*Zeta
     ret[6] = foc_R
-    ret[7] = (1-tau_l)*w_e*l*Uc*mu + (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta
+    ret[7] = foc_W#(1-tau_l)*w_e*l*Uc*mu + (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta
     ret[8] = foc_K
-    ret[9] = T - (tau_k*pi + tau_l*W*w_e*l - Gov)
-    ret[10] = Uc*mu + Zeta
+    ret[9] = T + Gov#- (tau_k*pi + tau_l*W*w_e*l - Gov)
+    ret[10] = Zeta #Uc*mu + Zeta
     
     ret[11] = logm-0.
     
@@ -167,7 +171,7 @@ def f(y):
     '''
     Expectational equations that define e=Ef(y)
     '''
-    logm,muhat,nu_a,nu_e,logc,logl,logk_,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_K,rho2_,rho3_,b_,labor_res,x_,alpha_,kappa_,rho2hat_,rho3hat_,lamb_ = y
+    logm,muhat,nu_a,nu_e,logc,logl,logk_,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_K,rho2_,rho3_,b_,labor_res,foc_W,x_,alpha_,kappa_,rho2hat_,rho3hat_,lamb_ = y
     
     c,k_ = np.exp(logc),np.exp(logk_)
     Uc = c**(-sigma)
@@ -252,9 +256,10 @@ def Finv(YSS,z):
                 
     lamb = np.zeros(c.shape)
     labor_res = w_e*l-nl
+    foc_W = ((1-tau_l)*w_e*l*Uc*mu + (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta )
     
     return np.vstack((
-    logm,muhat,nu_a,nu_e,np.log(c),np.log(l),np.log(k_),np.log(nl),w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_K,rho2,rho3,b_,labor_res,x_,alpha_,kappa_,rho2hat_,rho3hat_,lamb   
+    logm,muhat,nu_a,nu_e,np.log(c),np.log(l),np.log(k_),np.log(nl),w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_K,rho2,rho3,b_,labor_res,foc_W,x_,alpha_,kappa_,rho2hat_,rho3hat_,lamb   
     ))
     
     
@@ -264,7 +269,7 @@ def GSS(YSS,y_i,weights):
     '''
     Aggregate conditions for the steady state
     '''
-    logm,muhat,nu_a,nu_e,logc,logl,logk_,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_K,rho2_,rho3_,b_,labor_res,x_,alpha_,kappa_,rho2hat_,rho3hat_,lamb_  = y_i
+    logm,muhat,nu_a,nu_e,logc,logl,logk_,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_K,rho2_,rho3_,b_,labor_res,foc_W,x_,alpha_,kappa_,rho2hat_,rho3hat_,lamb_  = y_i
     logK,Alpha_,Alpha2_,W,tau_l,tau_k,Xi,Eta,Kappa_,T,Zeta = YSS
   
     c,l,k_,nl,m = np.exp(logc),np.exp(logl),np.exp(logk_),np.exp(lognl),np.exp(logm)
@@ -274,7 +279,7 @@ def GSS(YSS,y_i,weights):
     
     return np.hstack(
     [weights.dot(K - k_), weights.dot(f - c - Gov - K), weights.dot(l*w_e - nl), weights.dot(pi*mu*Uc + rho3_/beta+pi*Zeta), weights.dot(W*w_e*l*Uc*mu + phi1 + W*w_e*l*Zeta),
-     Alpha_-Alpha2_,weights.dot(foc_R), weights.dot((1-tau_l)*w_e*l*Uc*mu+ (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta),weights.dot(foc_K),weights.dot(Zeta + Uc*mu),weights.dot(T - (tau_k*pi + tau_l*W*w_e*l-Gov)) ]    
+     Alpha_-Alpha2_,weights.dot(foc_R), weights.dot((1-tau_l)*w_e*l*Uc*mu+ (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta),weights.dot(foc_K),T+Gov,Zeta]#weights.dot(Zeta + Uc*mu),weights.dot(T - (tau_k*pi + tau_l*W*w_e*l-Gov)) ]    
     )
     
     

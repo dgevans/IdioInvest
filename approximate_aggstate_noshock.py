@@ -13,6 +13,8 @@ from utilities import dict_fun
 import itertools
 from scipy.cluster.vq import kmeans2
 from scipy.optimize import root
+from scipy.optimize import brentq
+from scipy.linalg import solve_sylvester
 
 from mpi4py import MPI
 
@@ -103,6 +105,7 @@ Ivy = None
 Izy = None
 IZY = None
 Para = None
+dZ_Z0 = np.array([0.9])
 
 shock = None
 
@@ -255,11 +258,44 @@ class approximate(object):
                                 -DFi[:,Y] - DFi[:,v].dot(Ivy).dot(self.dy[Z](z_i)).dot(IZY))
         self.dy[Y] = dict_fun(dy_Y)
         
+    def residual_test(self,dZ_Z):
+        
+        #right now assume nZ =1
+        def dy_Z(z_i):
+            DFi = self.DF(z_i)[n:,:]
+            df = self.df(z_i)
+            DFhat_Zinv = np.linalg.inv(DFi[:,y] + DFi[:,e].dot(df) + DFi[:,v].dot(Ivy)*self.dZ_Z[0]) 
+            return DFhat_Zinv.dot(-DFi[:,Z]),DFhat_Zinv.dot(-DFi[:,Y])
+            
+        DG = lambda z_i : self.DG(z_i)[nG:,:]
+        
+        def dY_Z():
+            A,B = lambda z_i : dy_Z(z_i)[0], lambda z_i : dy_Z(z_i)[1]
+            temp1 = self.integrate(  lambda z_i: DG(z_i)[:,y].dot(A(z_i)) + DG(z_i)[:,Z]  )
+            temp2 = self.integrate(  lambda z_i: DG(z_i)[:,y].dot(B(z_i)) + DG(z_i)[:,Y]  )
+            return np.linalg.solve(temp2,-temp1)
+        
+        self.dZ_Z = dZ_Z
+        return (dY_Z()[:nZ]-dZ_Z).flatten()   
+        
+    def dY_Z_residual(self,dY_Z):
+        def dy_Z(z_i):
+            DFi = self.DF(z_i)[n:,:]
+            df = self.df(z_i)
+            dZ_Z = IZY.dot(dY_Z)
+            A = np.linalg.solve(DFi[:,y] + DFi[:,e].dot(df),DFi[:,v].dot(Ivy))
+            B = np.linalg.inv(dZ_Z)
+            C = -np.linalg.solve(DFi[:,y] + DFi[:,e].dot(df),DFi[:,Y].dot(dY_Z)+DFi[:,Z]).dot(B)
+            return solve_sylvester(A,B,C)
+        
+        DG = lambda z_i : self.DG(z_i)[nG:,:]
+        return self.integrate(lambda z_i : DG(z_i)[:,y].dot(dy_Z(z_i)) + DG(z_i)[:,Y].dot(dY_Z) + DG(z_i)[:,Z])
         
     def compute_dy_Z(self):
         '''
         Computes linearization w/ respecto aggregate state.
         '''
+        global dZ_Z0
         self.dZ_Z = np.eye(nZ)
         
         #right now assume nZ =1
@@ -278,10 +314,36 @@ class approximate(object):
             return np.linalg.solve(temp2,-temp1)
             
         def residual(dZ_Z):
-            self.dZ_Z = dZ_Z
+            self.dZ_Z = np.array([dZ_Z])
             return (dY_Z()[:nZ]-dZ_Z).flatten()
-        
-        self.dZ_Z = root(residual,0.9*np.ones(1)).x.reshape(nZ,nZ)
+            
+        res = root(residual,dZ_Z0)
+        if not res.success or res.x >= 1.:
+            res = root(residual,np.array([1.]))        
+        if not res.success or res.x >= 1.:
+            state = np.random.get_state()
+            ni = 0
+            while True:
+                if rank == 0:
+                    dY_Z0 = np.random.randn(nY*nZ)
+                else:
+                    dY_Z0 = None
+                dY_Z0 = comm.bcast(dY_Z0)
+                res = root(lambda dY_Z:self.dY_Z_residual(dY_Z.reshape(nY,nZ)).flatten() ,dY_Z0)
+                if res.success and res.x[0] < 1.:
+                        break
+                else:
+                    ni += 1
+                if ni>10:
+                    raise "Could not find stable dZ_Z"
+                        
+            np.random.set_state(state)
+            self.dZ_Z = res.x.reshape(nY,nZ)[:nZ]
+            dZ_Z0 = self.dZ_Z.flatten()
+        else:
+            self.dZ_Z = res.x.reshape(nZ,nZ)
+            dZ_Z0 = res.x.reshape(nZ)
+        #self.dZ_Z = root(residual,0.9*np.ones(1)).x.reshape(nZ,nZ)
         self.dY_Z = dY_Z()
 
         def compute_dy_Z(z_i):

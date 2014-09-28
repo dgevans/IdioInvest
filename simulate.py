@@ -5,7 +5,7 @@ Created on Sat Apr 19 16:14:02 2014
 @author: dgevans
 """
 
-import approximate
+import approximate_aggstate_noshock as approximate
 import numpy as np
 from IPython.parallel import Client
 from IPython.parallel import Reference
@@ -99,7 +99,7 @@ def simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T,T0=0,quadratic = True):
     '''
     Simulates a sequence of state path for a given Para
     '''
-    approximate.calibrate(Para)
+    #approximate.calibrate(Para)
     t = T0+1
     while t< T:
         Gamma[t],Z[t],Y[t-1], Shocks[t-1],y[t-1]= update_state_parallel_aggstate(Para,Gamma[t-1],Z[t-1],quadratic)
