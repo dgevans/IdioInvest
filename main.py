@@ -39,6 +39,7 @@ for frict in [0.0005,0.001,0.002]:
     print rho
     np.random.set_state(state)
     Para.sigma_e[:2] = get_stdev(rho)
+    Para.phat[2] = frict    
     
     Gamma,Z,Y,Shocks,y = {},{},{},{},{}
     Gamma[0] = np.zeros((N,4))
