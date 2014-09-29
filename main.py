@@ -24,17 +24,18 @@ def get_stdev(rho):
     
 T = 202
 N = 10000
-Para.k = 416
+Para.k = 480
 
 #simulate persistence
 data = {}
 state = np.random.get_state()
 if rank == 0:
-    utilities.sendMessage('Starting Persistence')
-    fout = open('persistence_frict.dat','wr')
+    #utilities.sendMessage('Starting Persistence')
+    fout = open('frict.dat','wr')
     fout.close()
-    
-for rho in np.linspace(0.6,0.9,7):
+
+rho = 0.6
+for frict in [0.0005,0.001,0.002]:
     print rho
     np.random.set_state(state)
     Para.sigma_e[:2] = get_stdev(rho)
@@ -48,15 +49,15 @@ for rho in np.linspace(0.6,0.9,7):
     
     simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
     if rank == 0:    
-        data[rho] = (np.vstack(Y.values()),[y[t] for t in range(0,T,50)])
+        data[frict] = (np.vstack(Y.values()),[y[t] for t in range(0,T,50)])
         message = 'Finished persistance: ' + str(rho)
-        utilities.sendMessage(message)
-        fout = open('persistence_frict.dat','wr')
+        #utilities.sendMessage(message)
+        fout = open('frict.dat','wr')
         cPickle.dump(data,fout)
         fout.close()
         
-if rank == 0:
-    utilities.sendMessage('Finished Persistence')
+#if rank == 0:
+#    utilities.sendMessage('Finished Persistence')
     
     
     
