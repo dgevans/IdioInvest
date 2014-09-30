@@ -54,7 +54,7 @@ for rho in np.linspace(0.,0.5,6):
         message = 'Finished persistance: ' + str(rho)
         #utilities.sendMessage(message)
         fout = open('persistence.dat','wr')
-        cPickle.dump(data,fout)
+        cPickle.dump((state,data),fout)
         fout.close()
         
 #if rank == 0:
