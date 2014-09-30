@@ -27,7 +27,7 @@ def simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T,T0=0,agg_shocks=None,quadratic =
         comm.Bcast([Gamma[t],MPI.DOUBLE])
         comm.Bcast([Z[t],MPI.DOUBLE])
         if rank ==0:
-            print t,np.exp(Z[t]),Y[t-1][4:6]
+            print t,np.exp(Z[t]),Y[t-1][5:7]
         t += 1
         
 

@@ -8,16 +8,16 @@ import numpy as np
 import pycppad as ad
 
 beta = 0.95
-gamma = 1.5
-sigma = 1.
+gamma = 2.
+sigma = 0.5
 #sigma_e = np.array([0.04,0.05,0.1,0.05])
-sigma_e = np.array([0.03,0.0,0.,0.])
+sigma_e = np.array([0.0,0.0,0.,0.])
 sigma_E = 0.0
 mu_e = 0.
-psi = 10.
-delta = 0.03
-xi_l = 0.7 *.8
-xi_k = 0.3 *.8
+psi = 1.
+delta = 0.06
+xi_l = 0.66 *.79
+xi_k = 0.34 *.79
 
 Gov = 0.17
 
@@ -34,7 +34,7 @@ n_p = 2 #number of parameters
 nZ = 2 # number of aggregate states
 neps = len(sigma_e)
 
-phat = np.array([-0.01,-0.005])
+phat = np.array([-0.0,-0.00])
 
 indx_y={'logm':0,'muhat':1,'e':2,'c' :3,'l':4,'rho1_':5,'rho2':6,'phi':7,'wages':8,'UcP':9,'a':10,'x_':11,'kappa_':12,'pers_shock':13,'trans_shock':14}
 indx_Y={'alpha1':0,'alpha2':1,'taxes':2,'eta':3,'lambda':4,'T':5,'shock':6}

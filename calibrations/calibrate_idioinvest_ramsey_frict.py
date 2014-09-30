@@ -8,17 +8,17 @@ import numpy as np
 import pycppad as ad
 
 beta = 0.95
-gamma = 1.5
-sigma = 1.
+gamma = 2.
+sigma = 0.5
 #sigma_e = np.array([0.04,0.05,0.1,0.05])
 sigma_e = np.array([0.02,0.0,0.,0.])
 sigma_E = 0.03
 mu_e = 0.
 mu_a = 0.
-chi = 10.
-delta = 0.03
-xi_l = 0.7 *.75
-xi_k = 0.3 *.75
+chi = 1.
+delta = 0.06
+xi_l = 0.66*(1-0.21) #*.75
+xi_k = 0.34*(1-0.21) #*.75
 
 Gov = 0.17
 
@@ -83,7 +83,7 @@ def F(w):
     Ucc = -sigma*c**(-sigma-1)
     Ul = -chi*l**(gamma)
     Ull = -chi*gamma*l**(gamma-1)
-    A = np.exp(nu_a+eps_t)    
+    A = np.exp(nu_a_+eps_p+eps_t)    
     
     r_k = A * xi_k*(xi_k-1) * k_**(xi_k-2) * nl**xi_l
     fnn = A  * xi_l*(xi_l-1) * k_**(xi_k) * nl**(xi_l-2)
@@ -104,7 +104,7 @@ def F(w):
     ret[8] = W - fn #phi2
     ret[9] = pi - ( A*(1-xi_l)*k_**(xi_k)*nl**(xi_l) + (1-delta)*k_   ) #pi
     ret[10] = Alpha_ - alpha_ #alpha1_
-    ret[11] = nu_a - (nu*nu_a_ + (1-nu)*mu_a + eps_p) #a
+    ret[11] = nu_a - (nu*(nu_a_+eps_p) + (1-nu)*mu_a ) #a
     ret[12] = f - A * k_**(xi_k) * nl**(xi_l) - (1-delta)*k_ #f  
     ret[13] = (Uc + Ucc*x_/(beta*EUc)*(mu-mu_) + mu*Ucc*( (1-tau_k)*pi-Ri_*k_  + (1-tau_l)*W*w_e*l-(c-T) -Uc/Ucc )
                 +m*Ucc*rho1 + Ri_ *Ucc/(beta*EUc) * rho2_  
@@ -119,8 +119,8 @@ def F(w):
     ret[20] = rho3hat_ - (1-tau_k) *rho3_ #temp2
     ret[21] = foc_R - (-beta*mu*Uc*k_ + rho2_ ) #foc_alpha2
     ret[22] = foc_K - (kappa-Xi) #foc_K
-    ret[23] = nu_e - (nu_l*nu_e_ + eps_l_p)
-    ret[24] = w_e - np.exp(nu_e + eps_l_t)
+    ret[23] = nu_e - nu_l*(nu_e_ + eps_l_p)
+    ret[24] = w_e - np.exp(nu_e_+ eps_l_p + eps_l_t)
     ret[25] = b_ - (x_*m_/Alpha_ - k_)
     ret[26] = lamb_ - ((rho2_ -beta*k_*EUc_mu + beta*Eta*b_)*dpsi_hat*W + beta*Eta*psi_hat*W)
     ret[27] = labor_res - (l*w_e - nl - psi)

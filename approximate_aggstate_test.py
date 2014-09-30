@@ -110,6 +110,7 @@ IZY = None
 IZYhat = None
 Para = None
 dY_Z0 = None
+k = None
 
 shock = None
 
@@ -121,7 +122,7 @@ y,e,Y,z,v,eps,Eps,p,Z,S,sigma,sigma_E = [None]*12
 
 def calibrate(Parahat):
     global F,G,f,ny,ne,nY,nz,nv,n,Ivy,Izy,IZY,nG,n_p,nZ,neps
-    global y,e,Y,z,v,eps,p,Z,S,sigma,Eps,sigma_E,Para
+    global y,e,Y,z,v,eps,p,Z,S,sigma,Eps,sigma_E,Para,k
     Para = Parahat
     #global interpolate
     F,G,f = Para.F,Para.G,Para.f
@@ -149,6 +150,8 @@ def calibrate(Parahat):
     
     sigma_E = Para.sigma_E
     
+    k = Para.k
+    
     #interpolate = utilities.interpolator_factory([3]*nz) # cubic interpolation
     steadystate.calibrate(Para)
 
@@ -156,11 +159,14 @@ class approximate(object):
     '''
     Computes the second order approximation 
     '''
-    def __init__(self,Gamma):
+    def __init__(self,Gamma,Gamma_weights=None):
         '''
         Approximate the equilibrium policies given z_i
         '''
+        if Gamma_weights ==None:
+            Gamma_weights = np.ones(len(Gamma))/len(Gamma)
         self.Gamma = Gamma
+        self.Gamma_weights = Gamma_weights
         self.approximate_Gamma()
         self.ss = steadystate.steadystate(self.dist)
 
@@ -181,7 +187,7 @@ class approximate(object):
         self.quadratic()
         self.join_function()
         
-    def approximate_Gamma(self,k=800):
+    def approximate_Gamma(self):
         '''
         Approximate the Gamma distribution
         '''
@@ -191,7 +197,8 @@ class approximate(object):
         #else:
         #    cluster,labels = comm.bcast(None)
         cluster,labels = kmeans2(self.Gamma,self.Gamma[:k,:],minit='matrix')
-        weights = (labels-np.arange(k).reshape(-1,1) ==0).sum(1)/float(len(self.Gamma))
+        weights = (labels == np.arange(k).reshape(-1,1)).dot(self.Gamma_weights)
+        #weights = (labels-np.arange(k).reshape(-1,1) ==0).sum(1)/float(len(self.Gamma))
         #Para.nomalize(cluster,weights)
         self.Gamma_ss = cluster[labels,:]
         mask = weights > 0

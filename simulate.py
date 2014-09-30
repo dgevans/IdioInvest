@@ -103,7 +103,7 @@ def simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T,T0=0,quadratic = True):
     t = T0+1
     while t< T:
         Gamma[t],Z[t],Y[t-1], Shocks[t-1],y[t-1]= update_state_parallel_aggstate(Para,Gamma[t-1],Z[t-1],quadratic)
-        print t,np.exp(Z[t]),Y[t-1][4:6]
+        print t,np.exp(Z[t]),Y[t-1][5:7]
         t += 1
     
 def update_state_parallel_aggstate(Para,Gamma,Z,quadratic = True):
