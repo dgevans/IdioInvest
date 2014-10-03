@@ -92,6 +92,9 @@ def F(w):
     fk = A * xi_k * k_**(xi_k-1) * nl**xi_l + (1-delta)
     fnk = A * xi_k * xi_l * k_**(xi_k-1) * nl**(xi_l-1)
     
+    pi_k = A*(1-xi_l)*xi_k*k_**(xi_k-1)*nl**(xi_l) + (1-delta)
+    pi_n = A*(1-xi_l)*xi_l*k_**(xi_k)*nl**(xi_l-1) 
+    
     ret = np.empty(ny+n,dtype=w.dtype)
     ret[0] = x_ - Ex_ # x is independent of eps
     ret[1] = k_ - Ek_
@@ -110,9 +113,9 @@ def F(w):
                 +m*Ucc*rho1 + Ri_ *Ucc/(beta*EUc) * rho2_  
                 + (1-tau_k)*Ucc*r/(beta*EUc_r)*rho3_ +(1-tau_l)*Ucc/Uc*phi1 - Xi)#c
     ret[13] = Ul +mu*(1-tau_l)*W*w_e*Uc - (1-tau_l)*Ull/Ul*phi1 + Eta*w_e - tau_l*W*w_e*Zeta#l
-    ret[14] = foc_k - ( mu*Uc*((1-tau_k)*r - Ri_) + (1-tau_k)*Uc*r_k/EUc_r *rho3_/beta 
+    ret[14] = foc_k - ( mu*Uc*((1-tau_k)*pi_k - Ri_) + (1-tau_k)*Uc*r_k/EUc_r *rho3_/beta 
                 -fnk*phi2 -Xi_/beta + fk*Xi - lamb_/beta - tau_k*r*Zeta ) #fock
-    ret[15] = -phi2*fnn - Eta + Xi*fn #nl
+    ret[15] = -phi2*fnn - Eta + Xi*fn  + mu*Uc*(1-tau_k)*pi_n + (1-tau_k)*Uc*fnk/(beta*EUc_r)*rho3_ #nl
     ret[16] = rho1*Uc + rho2hat/m + rho3hat/m + x*lamb/Alpha  #logm
     ret[17] = rho2hat_ - Ri_ * rho2_ #temp1
     ret[18] = rho3hat_ - (1-tau_k) *rho3_ #temp2
@@ -159,7 +162,7 @@ def G(w):
     ret[4] = labor_res
     ret[5] = W*w_e*l*Uc*mu + phi1 + W*w_e*l*Zeta
     ret[6] = foc_W#(1-tau_l)*w_e*l*Uc*mu + (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta
-    ret[7] = T + Gov-.01#- (tau_k*pi + tau_l*W*w_e*l - Gov)
+    ret[7] = T + Gov#- (tau_k*pi + tau_l*W*w_e*l - Gov)
     ret[8] = Zeta #Uc*mu + Zeta
     ret[9] = B_ - b_
     ret[10] = logm-0.
@@ -237,6 +240,8 @@ def Finv(YSS,z):
     fnk = xi_k * xi_l * A*k_**(xi_k-1)*nl**(xi_l-1)
     
     pi = f - W*nl
+    pi_k = A*(1-xi_l)*xi_k*k_**(xi_k-1)*nl**(xi_l) + (1-delta)
+    pi_n = A*(1-xi_l)*xi_l*k_**(xi_k)*nl**(xi_l-1) 
     
     
     x_ = -( Uc*((1-tau_k)*pi- 1/beta*k_) -Ul*l - Uc*(c-T) )/(1/beta-1)
@@ -244,18 +249,23 @@ def Finv(YSS,z):
     
     phi1 = (Ul + mu*(1-tau_l)*W*w_e*Uc + Eta*w_e - tau_l*W*w_e*Zeta)/( (1-tau_l)*Ull/Ul )
     #Ul - mu*(Ull*l + Ul) - phi1*Ull - Eta
-    phi2 = (Xi*fn-Eta)/fnn
+    #rho3 = beta*(-Uc*mu*((1-tau_k)*(pi_k-pi_n*fnk/fnn)- 1/beta) + Xi*fn*fnk/fnn - Eta*fnk/fnn
+    #                + Xi/beta - fk*Xi -   tau_k*r*Zeta)/((1-tau_k)*(fkk/r-fnk*fnk/(fnn*r)) )
     
-    rho3 = beta*(fnk*phi2 + Xi/beta - fk*Xi - tau_k*r*Zeta)/((1-tau_k)*fkk/r )
+    rho3 = -(beta*(mu*Uc*((1-tau_k)*(pi_k-pi_n*fnk/fnn)-1/beta) - Xi/beta + fk*Xi - Xi*fn*fnk/fnn + Eta*fnk/fnn)/
+                   ((1-tau_k)*(fkk/r-fnk*fnk/(fnn*r)) ) )
+
+    phi2 = (Xi*fn-Eta +Uc*mu*(1-tau_k)*pi_n + (1-tau_k)*fnk/(beta*fk)*rho3  )/fnn
+    
     rho1 = (Uc +mu*Ucc*( (1-tau_k)*pi-k_/beta + (1-tau_l)*W*w_e*l -(c-T) -Uc/Ucc ) + (1-tau_l)*Ucc/Uc*phi1 - Xi)/(Alpha_*Ucc/(beta*Uc) -Ucc*m)
     rho2 = -beta*(alpha*rho1 + (1-tau_k)*rho3)
     
     rho2hat_ = (1/beta) * rho2
-    rho3hat_ = (1-tau_k) *rho3
+    rho3hat_ = (1-tau_k) * rho3
     
     foc_R = (-beta*mu*Uc*k_ + rho2) #foc_alpha2
     
-    foc_k = ( (1-tau_k)*fkk/r *rho3/beta 
+    foc_k = ( mu*Uc*((1-tau_k)*pi_k - 1/beta)+ (1-tau_k)*fkk/r *rho3/beta 
                 -fnk*phi2 -Xi/beta + fk*Xi ) 
                 
     lamb = np.zeros(c.shape)
