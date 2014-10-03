@@ -6,6 +6,10 @@ Created on Fri Apr 11 17:30:59 2014
 """
 import numpy as np
 from scipy.optimize import root
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+
 
 Finv = None
 GSS = None
@@ -46,10 +50,17 @@ class steadystate(object):
         res = root(self.SteadyStateRes,Y0,tol = 1e-14)
         state = np.random.get_state()
         while not res.success or not check_SS(res.x):
-            res = root(self.SteadyStateRes,np.random.rand(nY))
+            res = root(self.SteadyStateRes,np.random.rand(nY),tol=1e-14)
         np.random.set_state(state)
+        
+        diff = np.max(np.abs(self.SteadyStateRes(res.x)))
+        diffs =  comm.allgather(diff)       
+        i = np.argmin(diffs)
+        
         Y0 = res.x
-        self.Y = res.x
+        comm.Bcast([Y0, MPI.DOUBLE],root=i)
+        
+        self.Y = Y0
         
     def SteadyStateRes(self,Y):
         '''

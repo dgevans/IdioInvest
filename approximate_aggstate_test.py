@@ -159,7 +159,7 @@ class approximate(object):
     '''
     Computes the second order approximation 
     '''
-    def __init__(self,Gamma,Gamma_weights=None):
+    def __init__(self,Gamma,Gamma_weights=None,fit = True):
         '''
         Approximate the equilibrium policies given z_i
         '''
@@ -181,11 +181,11 @@ class approximate(object):
         self.df = dict_fun(lambda z_i:utilities.ad_Jacobian(f,self.get_w(z_i)[y]))
         self.Hf = dict_fun(lambda z_i:utilities.ad_Hessian(f,self.get_w(z_i)[y]))
         
-        
-        #linearize
-        self.linearize()
-        self.quadratic()
-        self.join_function()
+        if fit:
+            #linearize
+            self.linearize()
+            self.quadratic()
+            self.join_function()
         
     def approximate_Gamma(self):
         '''
@@ -294,12 +294,16 @@ class approximate(object):
             else:
                 dY_Z0 = np.empty(nY*nZ)
             comm.Bcast([dY_Z0,MPI.DOUBLE])
-            res = root(f,dY_Z0)
-            if res.success:
-                lamb =  np.linalg.eigvals(res.x.reshape(nY,nZ)[:nZ])
-                if np.max(np.abs(lamb)) <1 :
-                    break
-            dY_Z0 = None
+            try:
+                res = root(f,dY_Z0)
+                if res.success:
+                    lamb =  np.linalg.eigvals(res.x.reshape(nY,nZ)[:nZ])
+                    if np.max(np.abs(lamb)) <1 and all(np.isreal(lamb)) :
+                        break
+                dY_Z0 = None
+            except:
+                dY_Z0 = None
+            
                 
         dY_Z = res.x.reshape(nY,nZ)
         dY_Z0 = res.x
@@ -704,6 +708,7 @@ class approximate(object):
         self.d2Y[sigma_E] = - np.tensordot(DGhat_YsigmaEinv,HGhat_sigmaE,1)
         self.d2y[sigma_E] = dict_fun(lambda z_i : d2y_sigmaE(z_i) + np.tensordot(dy_YsigmaE(z_i),self.d2Y[sigma_E],1))
         
+        
     def compute_d2y(self):
         '''
         Computes second derivative of y
@@ -949,7 +954,7 @@ class approximate(object):
             e = r*sigma
             Shat = np.hstack([zhat,Y1hat])
             if not extreme:
-                return np.hstack(( self.ss.get_y(zbar).flatten() + self.dy[eps](zbar).dot(e).flatten() + (self.dy[Eps](zbar).flatten())*0.
+                return np.hstack(( self.ss.get_y(zbar).flatten() + self.dy[eps](zbar).dot(e).flatten() + (self.dy[Eps](zbar).flatten())*E
                                     + self.dy[p](zbar).dot(phat).flatten()
                                     + self.dy[z](zbar).dot(zhat).flatten()
                                     + self.dy[Y](zbar).dot(Y1hat).flatten()
@@ -962,7 +967,7 @@ class approximate(object):
                                     +quadratic_dot(self.d2y[Z,Z](zbar),Zhat,Zhat)
                                     +2*np.einsum('ijk,jk,k',self.dy[Y,S,Z](zbar),Y2hat_GZ,Zhat)
                                     +2*np.einsum('ijk,jk,k',self.d2y[Y,S,Z](zbar),Y2hat_GZ,IZYhat.dot(Y1hat))
-                                    +self.d2y[Eps,Eps](zbar).flatten()*sigma_E**2
+                                    +self.d2y[Eps,Eps](zbar).flatten()*E**2
                                     +self.d2y[sigma_E](zbar).flatten()*sigma_E**2
                                     ).flatten()
                                    ,e))
@@ -992,6 +997,81 @@ class approximate(object):
                     + self.dY_Z.dot(Zhat)
                     + 0.5*quadratic*(self.d2Y[sigma].dot(sigma**2) + Y2hat + 2*Y2hat_GZ.dot(Zhat)).flatten()
                     + 0.5*(self.d2Y[Eps,Eps].flatten()*E**2 + self.d2Y[sigma_E].flatten()*sigma_E**2))
+            Znew = Ynew[:nZ]
+            return Gamma,Znew,Ynew,epsilon,y
+        else:
+            parallel_map(compute_ye,Gamma_dist)
+            return None
+
+    def iterate_ConditionalMean(self,Zbar,quadratic = True):
+        '''
+        Iterates the distribution by randomly sampling
+        '''
+        Zhat = self.dZhat_Z.dot(Zbar-self.ss.get_Y()[:nZ])
+        if rank == 0:
+            r = np.random.randn()
+            if not shock == None:
+                r = shock
+            r = min(3.,max(-3.,r))
+            E = r*sigma_E
+        else:
+            E = None
+            
+        E = comm.bcast(E)
+        phat = Para.phat
+        Gamma_dist = zip(self.Gamma,self.Gamma_ss)
+        
+        Y1hat = parallel_sum(lambda z : self.dY(z[1]).dot((z[0]-z[1]))
+                          ,Gamma_dist)/len(self.Gamma)
+        def Y2_int(x):
+            z_i,zbar = x
+            zhat = z_i-zbar
+            return (quadratic_dot(self.d2Y[z,z](zbar),zhat,zhat) + 2* quadratic_dot(self.d2Y[z,Y](zbar),zhat,Y1hat)).flatten()
+        
+        Y2hat = parallel_sum(Y2_int,Gamma_dist)/len(self.Gamma)
+        
+        def Y2_GZ_int(x):
+            z_i,zbar = x
+            zhat = z_i-zbar
+            return quadratic_dot(self.d2Y[z,Z](zbar),zhat,np.eye(nZ)).reshape(nY,nZ)
+        Y2hat_GZ =  parallel_sum(Y2_GZ_int,Gamma_dist)/len(self.Gamma)
+        
+        def compute_ye(x):
+            z_i,zbar = x
+            extreme = Para.check_extreme(z_i)
+            zhat = z_i-zbar
+            r = np.random.randn(neps)
+            for i in range(neps):
+                r[i] = min(3.,max(-3.,r[i]))
+            e = r*sigma
+            Shat = np.hstack([zhat,Y1hat])
+            if not extreme:
+                return np.hstack(( self.ss.get_y(zbar).flatten() + self.dy[eps](zbar).dot(e).flatten() + (self.dy[Eps](zbar).flatten())*0.
+                                    + self.dy[p](zbar).dot(phat).flatten()
+                                    + self.dy[z](zbar).dot(zhat).flatten()
+                                    + self.dy[Y](zbar).dot(Y1hat).flatten()
+                                    + self.dy[Z](zbar).dot(Zhat).flatten()
+                                    + 0.5*quadratic*(quadratic_dot(self.d2y[eps,eps](zbar),e,e).flatten() + self.d2y[sigma](zbar).dot(sigma**2).flatten()
+                                    +quadratic_dot(self.d2y[S,S](zbar),Shat,Shat) + 2*quadratic_dot(self.d2y[S,eps](zbar),Shat,e)
+                                    +self.dy[Y](zbar).dot(Y2hat)      
+                                    +2*quadratic_dot(self.d2y[Z,S](zbar),Zhat,Shat)
+                                    +2*quadratic_dot(self.d2y[Z,eps](zbar),Zhat,e)
+                                    +quadratic_dot(self.d2y[Z,Z](zbar),Zhat,Zhat)
+                                    +2*np.einsum('ijk,jk,k',self.dy[Y,S,Z](zbar),Y2hat_GZ,Zhat)
+                                    +2*np.einsum('ijk,jk,k',self.d2y[Y,S,Z](zbar),Y2hat_GZ,IZYhat.dot(Y1hat))
+                                    +self.d2y[Eps,Eps](zbar).flatten()*sigma_E**2
+                                    +self.d2y[sigma_E](zbar).flatten()*sigma_E**2
+                                    ).flatten()
+                                   ,e))
+        if rank == 0:    
+            ye = np.vstack(parallel_map(compute_ye,Gamma_dist))
+            y,epsilon = ye[:,:-neps],ye[:,-neps]
+            Gamma = y.dot(Izy.T)
+            Ynew = (self.ss.get_Y() + Y1hat + self.dY_Eps.flatten()*0.
+                    + self.dY_p.dot(phat).flatten()
+                    + self.dY_Z.dot(Zhat)
+                    + 0.5*quadratic*(self.d2Y[sigma].dot(sigma**2) + Y2hat + 2*Y2hat_GZ.dot(Zhat)).flatten()
+                    + 0.5*(self.d2Y[Eps,Eps].flatten()*sigma_E**2 + self.d2Y[sigma_E].flatten()*sigma_E**2))
             Znew = Ynew[:nZ]
             return Gamma,Znew,Ynew,epsilon,y
         else:

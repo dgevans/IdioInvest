@@ -19,6 +19,7 @@ def simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T,T0=0,agg_shocks=None,quadratic =
     Simulates using the MPI code rather than Ipython parallel
     '''
     approximate.calibrate(Para)
+    approximate.shock = None
     t = T0+1
     while t < T:
         if agg_shocks is not None:
@@ -30,9 +31,6 @@ def simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T,T0=0,agg_shocks=None,quadratic =
             print t,np.exp(Z[t]),Y[t-1][5:7]
         t += 1
         
-
-
-
     
 def update_state_parallel_aggstate(Para,Gamma,Z,quadratic = True):
     '''
@@ -41,6 +39,35 @@ def update_state_parallel_aggstate(Para,Gamma,Z,quadratic = True):
 
     approx = approximate.approximate(Gamma)
     data = approx.iterate(Z)
+    if rank == 0:
+        Gamma_new,ZNew,Y,Shocks,y = data
+        return Para.nomalize(Gamma_new),ZNew,Y,Shocks,y
+    else:
+        return np.empty(Gamma.shape),np.empty(Z.shape),None,None,None
+        
+        
+def simulate_aggstate_ConditionalMean(Para,Gamma,Z,Y,Shocks,y,T,T0=0,quadratic = True):
+    '''
+    Simulates using the MPI code rather than Ipython parallel
+    '''
+    approximate.calibrate(Para)
+    t = T0+1
+    while t < T:
+        Gamma[t],Z[t],Y[t-1], Shocks[t-1],y[t-1]= update_state_parallel_aggstate_ConditionalMean(Para,Gamma[t-1],Z[t-1],quadratic)
+        comm.Bcast([Gamma[t],MPI.DOUBLE])
+        comm.Bcast([Z[t],MPI.DOUBLE])
+        if rank ==0:
+            print t,np.exp(Z[t]),Y[t-1][5:7]
+        t += 1
+        
+    
+def update_state_parallel_aggstate_ConditionalMean(Para,Gamma,Z,quadratic = True):
+    '''
+    Updates the state using parallel code
+    '''
+
+    approx = approximate.approximate(Gamma)
+    data = approx.iterate_ConditionalMean(Z)
     if rank == 0:
         Gamma_new,ZNew,Y,Shocks,y = data
         return Para.nomalize(Gamma_new),ZNew,Y,Shocks,y

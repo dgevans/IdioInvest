@@ -9,7 +9,7 @@ import pycppad as ad
 
 beta = 0.95
 gamma = 2.
-sigma = 0.5
+sigma = 1.
 #sigma_e = np.array([0.04,0.05,0.1,0.05])
 sigma_e = np.array([0.0,0.0,0.,0.])
 sigma_E = 0.0
@@ -34,7 +34,7 @@ n_p = 2 #number of parameters
 nZ = 2 # number of aggregate states
 neps = len(sigma_e)
 
-phat = np.array([-0.0,-0.00])
+phat = np.array([-0.01,-0.00])
 
 indx_y={'logm':0,'muhat':1,'e':2,'c' :3,'l':4,'rho1_':5,'rho2':6,'phi':7,'wages':8,'UcP':9,'a':10,'x_':11,'kappa_':12,'pers_shock':13,'trans_shock':14}
 indx_Y={'alpha1':0,'alpha2':1,'taxes':2,'eta':3,'lambda':4,'T':5,'shock':6}
@@ -285,7 +285,7 @@ def check_extreme(z_i):
     return extreme
     
 def check_SS(YSS):
-    if YSS[0] < -5.:
+    if YSS[2] < -5.:
         return False
     return True
     

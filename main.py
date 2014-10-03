@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_idioinvest_ramsey_shock as Para
+import calibrations.calibrate_idioinvest_ramsey_frict_shock as Para
 import approximate_aggstate_test as approximate
 import numpy as np
 import simulate_MPI as simulate
@@ -13,7 +13,7 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
 var_a =  0.10622#np.log(1+1/2.67)
-Para.mu_a = -var_a/2
+#Para.mu_a = -var_a/2
 corr_pers = 0.99
 
 def get_stdev(rho):
@@ -22,7 +22,7 @@ def get_stdev(rho):
     std_iid = np.sqrt(var_a*(1-frac))
     return [std_pers,std_iid]
     
-T = 202
+T = 400
 N = 10000
 Para.k = 304
 
@@ -31,15 +31,15 @@ data = {}
 state = np.random.get_state()
 if rank == 0:
     #utilities.sendMessage('Starting Persistence')
-    fout = open('persistence.dat','wr')
+    fout = open('pers_frict.dat','wr')
     fout.close()
-
-for rho in np.linspace(0.,0.5,6):
+    
+for rho in np.linspace(0.1,0.6,6):
     if rank ==0:
         print rho
     np.random.set_state(state)
     Para.sigma_e[:2] = get_stdev(rho)
-    #Para.phat[2] = frict    
+    Para.phat[2] = 0.001 
     
     Gamma,Z,Y,Shocks,y = {},{},{},{},{}
     Gamma[0] = np.zeros((N,4))
@@ -53,7 +53,7 @@ for rho in np.linspace(0.,0.5,6):
         data[rho] = (np.vstack(Y.values()),[y[t] for t in range(0,T,50)])
         message = 'Finished persistance: ' + str(rho)
         #utilities.sendMessage(message)
-        fout = open('persistence.dat','wr')
+        fout = open('pers_frict.dat','wr')
         cPickle.dump((state,data),fout)
         fout.close()
         
