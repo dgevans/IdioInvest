@@ -311,10 +311,12 @@ def nomalize(Gamma,weights =None):
     '''
     if weights == None:            
         Gamma[:,0] -= np.mean(Gamma[:,0])
-        #Gamma[:,1] -= np.mean(Gamma[:,1])
+        if phat[2]  == 0:
+            Gamma[:,1] -= np.mean(Gamma[:,1])
     else:
         Gamma[:,0] -= weights.dot(Gamma[:,0])
-        #Gamma[:,1] -= weights.dot(Gamma[:,1])
+        if phat[2] == 0:
+            Gamma[:,1] -= weights.dot(Gamma[:,1])
     return Gamma
     
 def check_extreme(z_i):
