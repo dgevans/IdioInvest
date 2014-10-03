@@ -22,9 +22,9 @@ def get_stdev(rho):
     std_iid = np.sqrt(var_a*(1-frac))
     return [std_pers,std_iid]
     
-T = 400
+T = 302
 N = 10000
-Para.k = 304
+Para.k = 320
 
 #simulate persistence
 data = {}
@@ -50,7 +50,7 @@ for rho in np.linspace(0.1,0.6,6):
     
     simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
     if rank == 0:    
-        data[rho] = (np.vstack(Y.values()),[y[t] for t in range(0,T,50)])
+        data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
         message = 'Finished persistance: ' + str(rho)
         #utilities.sendMessage(message)
         fout = open('pers_frict.dat','wr')

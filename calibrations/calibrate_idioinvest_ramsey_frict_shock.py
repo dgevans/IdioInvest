@@ -320,7 +320,7 @@ def check_extreme(z_i):
     return extreme
     
 def check_SS(YSS):
-    if YSS[2] < -5.:
+    if YSS[2] < -1.5:
         return False
     return True
     

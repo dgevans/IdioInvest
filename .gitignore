@@ -1,2 +1,4 @@
 .DS_Store
 *.pyc
+pers_frict.dat
+*.dat
