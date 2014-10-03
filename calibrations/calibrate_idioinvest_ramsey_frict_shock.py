@@ -9,7 +9,7 @@ import pycppad as ad
 
 beta = 0.95
 gamma = 2.
-sigma = 1.
+sigma = 2.
 #sigma_e = np.array([0.04,0.05,0.1,0.05])
 sigma_e = np.array([0.02,0.0,0.,0.])
 sigma_E = 0.0
