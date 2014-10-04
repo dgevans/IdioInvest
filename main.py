@@ -25,18 +25,18 @@ def get_stdev(rho):
     return [std_pers,std_iid]
     
 T = 202
-N = 10000
-Para.k = 7*32
+N = 15000
+Para.k = 7*48
 
 #simulate persistence
 data = {}
 state = np.random.get_state()
 if rank == 0:
     utilities.sendMessage('Starting Persistence')
-    fout = open('pers.dat','wr')
+    fout = open('pers15.dat','wr')
     fout.close()
     
-for rho in np.linspace(0.0,0.6,6)[2:]:
+for rho in np.linspace(0.0,0.6,6):
     if rank ==0:
         utilities.sendMessage(str(rho))
         print rho
@@ -53,8 +53,8 @@ for rho in np.linspace(0.0,0.6,6)[2:]:
     
     simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
     if rank == 0:    
-        data[rho] = (np.vstack(Y.values()),[y[t] for t in range(0,T,50)])
-        fout = open('pers2.dat','wr')
+        data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
+        fout = open('pers15.dat','wr')
         cPickle.dump((state,data),fout)
         fout.close()
         
@@ -64,6 +64,7 @@ if rank == 0:
     
 for rho in np.linspace(0.0,0.6,6):
     if rank ==0:
+        utilities.sendMessage(str(rho))
         print rho
     np.random.set_state(state)
     Para.sigma_e[:2] = get_stdev(rho)
@@ -78,10 +79,8 @@ for rho in np.linspace(0.0,0.6,6):
     
     simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
     if rank == 0:    
-        data[rho] = (np.vstack(Y.values()),[y[t] for t in range(0,T,50)])
-        message = str(rho)
-        utilities.sendMessage(message)
-        fout = open('pers_frict2.dat','wr')
+        data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
+        fout = open('pers_frict15.dat','wr')
         cPickle.dump((state,data),fout)
         fout.close()
         
