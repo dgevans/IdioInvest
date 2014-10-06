@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_idioinvest_ramsey_shock as Para
+import calibrations.calibrate_idioinvest_ramsey_frict_shock as Para
 import approximate_aggstate_test as approximate
 import numpy as np
 import simulate_MPI as simulate
 import utilities
 from mpi4py import MPI
 import cPickle
+import warnings
+warnings.filterwarnings('ignore')
 
 simulate.approximate = approximate
 comm = MPI.COMM_WORLD
@@ -26,29 +28,30 @@ T = 50
 Para.k = 304
 Para.sigma_E = 0.03
 Para.phat[:] = 0.
+Para.sigma_e[:] = 0.
 approximate.calibrate(Para)
 Gamma0,weights = cPickle.load(file('Gamma0.dat','r'))
 Gamma,Z,Y,Shocks,y = {},{},{},{},{}
 Gamma[0] = Gamma0
 ss = steadystate.steadystate(zip(Gamma0,weights))
 Z[0] = ss.get_Y()[:2]
+print Z[0]
 
-
-simulate.simulate_aggstate_ConditionalMean(Para,Gamma,Z,Y,Shocks,y,20)
+simulate.simulate_aggstate_ConditionalMean(Para,Gamma,Z,Y,Shocks,y,20,weights=weights)
 Gamma[0] = Gamma[19]
 Z[0] = Z[19]
 
-simulate.simulate_aggstate_ConditionalMean(Para,Gamma,Z,Y,Shocks,y,T)
+simulate.simulate_aggstate_ConditionalMean(Para,Gamma,Z,Y,Shocks,y,20,weights=weights)
 
 Y1 = np.vstack(Y.values())
 
-simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,2,T0=0,agg_shocks=np.ones(2))
-simulate.simulate_aggstate_ConditionalMean(Para,Gamma,Z,Y,Shocks,y,15,1)
+simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,2,T0=0,agg_shocks=np.ones(10),weights=weights)
+simulate.simulate_aggstate_ConditionalMean(Para,Gamma,Z,Y,Shocks,y,20,1,weights=weights)
 
 Y2 = np.vstack(Y.values())
 
 
-simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,500)
+simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,500,weights=weights)
 
 Y3 = np.vstack(Y.values())
 

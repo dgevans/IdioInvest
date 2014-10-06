@@ -312,7 +312,7 @@ class approximate(object):
         D,V = np.linalg.eig(dY_Z[:nZ])
         self.dY_Z = dY_Z.dot(V)
         self.dZ_Z = np.diagflat(D)
-        self.dZhat_Z = V
+        self.dZhat_Z = np.linalg.inv(V)
         IZYhat = np.linalg.solve(V,IZY)
         
         def dy_Z(z_i):
@@ -481,7 +481,7 @@ class approximate(object):
         
         d[Eps,S],d[Eps,eps],d[Eps,Z],d[Eps,Eps] = np.zeros((1,nz+nY)),np.zeros((1,neps)),np.zeros((1,nZ)),np.eye(1)
         
-        d[Z,Z],d[Z,S],d[Z,Eps] = self.dZhat_Z,np.zeros((nZ,nY+nz)),np.zeros((nZ,1))
+        d[Z,Z],d[Z,S],d[Z,Eps],d[Z,eps] = np.linalg.inv(self.dZhat_Z),np.zeros((nZ,nY+nz)),np.zeros((nZ,1)),np.zeros((nZ,neps))
 
         d[y,z] = d[y,S][:,:nz]
         
@@ -502,9 +502,9 @@ class approximate(object):
                     HF = self.HF(z_i)
                     d = self.get_d(z_i)
                     HFhat = 0.
-                    for y1 in [y,e,Y,z,v,eps,Eps]:
+                    for y1 in [y,e,Y,Z,z,v,eps,Eps]:
                         HFy1 = HF[:,y1,:]
-                        for y2 in [y,e,Y,z,v,eps,Eps]:
+                        for y2 in [y,e,Y,Z,z,v,eps,Eps]:
                             if x1.__hash__() in shock_hashes or x2.__hash__() in shock_hashes:
                                 HFhat += quadratic_dot(HFy1[:-n,:,y2],d[y1,x1],d[y2,x2])
                             else:
@@ -996,7 +996,9 @@ class approximate(object):
                     + self.dY_p.dot(phat).flatten()
                     + self.dY_Z.dot(Zhat)
                     + 0.5*quadratic*(self.d2Y[sigma].dot(sigma**2) + Y2hat + 2*Y2hat_GZ.dot(Zhat)).flatten()
-                    + 0.5*(self.d2Y[Eps,Eps].flatten()*E**2 + self.d2Y[sigma_E].flatten()*sigma_E**2))
+                    + 0.5*(self.d2Y[Eps,Eps].flatten()*E**2 + self.d2Y[sigma_E].flatten()*sigma_E**2)
+                    + 0.5*quadratic_dot(self.d2Y[Z,Z],Zhat,Zhat))
+                    
             Znew = Ynew[:nZ]
             return Gamma,Znew,Ynew,epsilon,y
         else:
@@ -1071,7 +1073,8 @@ class approximate(object):
                     + self.dY_p.dot(phat).flatten()
                     + self.dY_Z.dot(Zhat)
                     + 0.5*quadratic*(self.d2Y[sigma].dot(sigma**2) + Y2hat + 2*Y2hat_GZ.dot(Zhat)).flatten()
-                    + 0.5*(self.d2Y[Eps,Eps].flatten()*sigma_E**2 + self.d2Y[sigma_E].flatten()*sigma_E**2))
+                    + 0.5*(self.d2Y[Eps,Eps].flatten()*sigma_E**2 + self.d2Y[sigma_E].flatten()*sigma_E**2)
+                    + 0.5*quadratic_dot(self.d2Y[Z,Z],Zhat,Zhat))
             Znew = Ynew[:nZ]
             return Gamma,Znew,Ynew,epsilon,y
         else:

@@ -22,17 +22,17 @@ def get_stdev(rho):
     return [std_pers,std_iid]
 
 N = 5000
-Para.k = 200
+Para.k = 100
 steadystate.calibrate(Para)
 
 v = simulate.v
 v.block =True
 v.execute('import calibrations.calibrate_idioinvest_ramsey_frict_shock as Para')
-v.execute('Para.k = 200')
+v.execute('Para.k = 100')
 v.execute('import approximate_aggstate_test as approximate')
-v['sig'] = get_stdev(0.5)
+v['sig'] = get_stdev(0.0)
 v.execute('Para.sigma_e[:2] = sig')
-v.execute('Para.phat[2] = 0.005')
+v.execute('Para.phat[2] = 0.0')
 v.execute('approximate.calibrate(Para)')
 v.execute('approximate.shock = 0.')
 

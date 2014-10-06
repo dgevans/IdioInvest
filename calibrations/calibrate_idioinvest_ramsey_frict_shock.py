@@ -25,7 +25,7 @@ Gov = 0.17
 
 
 n = 4 # number of measurability constraints
-nG = 3 # number of aggregate measurability constraints.
+nG = 4 # number of aggregate measurability constraints.
 ny = 29 # number of individual controls (m_{t},mu_{t},c_{t},l_{t},rho1_,rho2,phi,x_{t-1},kappa_{t-1}) Note that the forward looking terms are at the end
 ne = 9 # number of Expectation Terms (E_t u_{c,t+1}, E_t u_{c,t+1}mu_{t+1} E_{t}x_{t-1 E_t rho_{1,t-1}} [This makes the control x_{t-1},rho_{t-1} indeed time t-1 measuable])
 nY = 11 # Number of aggregates (alpha_1,alpha_2,tau,eta,lambda)
@@ -84,7 +84,7 @@ def F(w):
     Ucc = -sigma*c**(-sigma-1)
     Ul = -chi*l**(gamma)
     Ull = -chi*gamma*l**(gamma-1)
-    A = np.exp(nu_a_+eps_p+eps_t)    
+    A = np.exp(Eps+nu_a_+eps_p+eps_t)    
     
     r_k = A * xi_k*(xi_k-1) * k_**(xi_k-2) * nl**xi_l
     fnn = A  * xi_l*(xi_l-1) * k_**(xi_k) * nl**(xi_l-2)
@@ -120,7 +120,7 @@ def F(w):
     ret[17] = rho2hat_ - Ri_ * rho2_ #temp1
     ret[18] = rho3hat_ - (1-tau_k) *rho3_ #temp2
     ret[19] = foc_R - (-beta*EUc_mu*k_ + rho2_ ) #foc_alpha2
-    ret[20] = nu_e - nu_l*(nu_e_ + eps_l_p)
+    ret[20] = nu_e - nu_l*(nu_e_ + eps_l_p) - (1-nu_l)*mu_e
     ret[21] = w_e - np.exp(nu_e_+ eps_l_p + eps_l_t)
     ret[22] = b_ - (x_*m_/Alpha_ - k_)
     ret[23] = lamb_ - ((rho2_ -beta*k_*EUc_mu + beta*Eta*b_)*dpsi_hat*W + beta*Eta*psi_hat*W)
@@ -157,19 +157,20 @@ def G(w):
     ret[0] = Alpha2_
     ret[1] = tau_k
     ret[2] = logK_
+    ret[3] = muhat
     
-    ret[3] = res
-    ret[4] = labor_res
-    ret[5] = W*w_e*l*Uc*mu + phi1 + W*w_e*l*Zeta
-    ret[6] = foc_W#(1-tau_l)*w_e*l*Uc*mu + (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta
-    ret[7] = T + Gov#- (tau_k*pi + tau_l*W*w_e*l - Gov)
+    ret[4] = res
+    ret[5] = labor_res
+    ret[6] = W*w_e*l*Uc*mu + phi1 + W*w_e*l*Zeta
+    ret[7] = foc_W#(1-tau_l)*w_e*l*Uc*mu + (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta
     ret[8] = Zeta #Uc*mu + Zeta
     ret[9] = B_ - b_
     ret[10] = logm-0.
     
-    ret[11] = K_ - k_
-    ret[12] = foc_tau_k
-    ret[13] = foc_R
+    ret[11] = T + Gov#- (tau_k*pi + tau_l*W*w_e*l - Gov)
+    ret[12] = K_ - k_
+    ret[13] = foc_tau_k
+    ret[14] = foc_R
     
     return ret
     

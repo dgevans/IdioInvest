@@ -25,20 +25,20 @@ def get_stdev(rho):
     return [std_pers,std_iid]
     
 T = 202
-N = 15000
-Para.k = 7*48
+N = 10000
+Para.k = 5*48
 
 #simulate persistence
 data = {}
 state = np.random.get_state()
 if rank == 0:
-    utilities.sendMessage('Starting Persistence')
+    #utilities.sendMessage('Starting Persistence')
     fout = open('pers15.dat','wr')
     fout.close()
     
 for rho in np.linspace(0.0,0.6,6):
     if rank ==0:
-        utilities.sendMessage(str(rho))
+        #utilities.sendMessage(str(rho))
         print rho
     np.random.set_state(state)
     Para.sigma_e[:2] = get_stdev(rho)

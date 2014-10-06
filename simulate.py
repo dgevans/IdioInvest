@@ -100,7 +100,7 @@ def simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T,T0=0,quadratic = True):
     Simulates a sequence of state path for a given Para
     '''
     #approximate.calibrate(Para)
-    v.execute('approxes = []')
+    #v.execute('approxes = []')
     t = T0+1
     while t< T:
         Gamma[t],Z[t],Y[t-1], Shocks[t-1],y[t-1]= update_state_parallel_aggstate(Para,Gamma[t-1],Z[t-1],quadratic)
@@ -115,7 +115,7 @@ def update_state_parallel_aggstate(Para,Gamma,Z,quadratic = True):
     v['Gamma'] = Gamma
     v['Z'] = Z
     v.execute('approx = approximate.approximate(Gamma)')
-    v.execute('approxes.append(approx)')
+    #v.execute('approxes.append(approx)')
     diff = np.inf
     n = 0.
     while diff > 0.001 and n < 1:
