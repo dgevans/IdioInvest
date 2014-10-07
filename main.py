@@ -25,66 +25,93 @@ def get_stdev(rho):
     return [std_pers,std_iid]
     
 T = 202
-N = 10000
-Para.k = 5*48
+N = 15000
+Para.k = 48*7
 
 #simulate persistence
 data = {}
 state = np.random.get_state()
-if rank == 0:
-    #utilities.sendMessage('Starting Persistence')
-    fout = open('pers15.dat','wr')
-    fout.close()
     
-for rho in np.linspace(0.0,0.6,6):
-    if rank ==0:
-        #utilities.sendMessage(str(rho))
-        print rho
-    np.random.set_state(state)
-    Para.sigma_e[:2] = get_stdev(rho)
-    Para.phat[2] = 0.
-    
-    Gamma,Z,Y,Shocks,y = {},{},{},{},{}
-    Gamma[0] = np.zeros((N,4))
-    
-    steadystate.calibrate(Para)
-    ss = steadystate.steadystate(zip(np.zeros((1,4)),np.ones(1)))
-    Z[0] = ss.get_Y()[:2]
-    
-    simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
-    if rank == 0:    
-        data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-        fout = open('pers15.dat','wr')
-        cPickle.dump((state,data),fout)
-        fout.close()
+def run_rho_experiment():
+    if rank == 0:
+        utilities.sendMessage('Starting Persistence')
+    for rho in np.linspace(0.6,0.6,1):
+        if rank ==0:
+            utilities.sendMessage(str(rho))
+            print rho
+        np.random.set_state(state)
+        Para.sigma_e[:2] = get_stdev(rho)
+        Para.phat[2] = 0.
         
-if rank == 0:
-    utilities.sendMessage('Finished Persistence')
-    utilities.sendMessage('Starting Financial Frictions')
-    
-for rho in np.linspace(0.0,0.6,6):
-    if rank ==0:
-        utilities.sendMessage(str(rho))
-        print rho
-    np.random.set_state(state)
-    Para.sigma_e[:2] = get_stdev(rho)
-    Para.phat[2] = 0.001
-    
-    Gamma,Z,Y,Shocks,y = {},{},{},{},{}
-    Gamma[0] = np.zeros((N,4))
-    
-    steadystate.calibrate(Para)
-    ss = steadystate.steadystate(zip(np.zeros((1,4)),np.ones(1)))
-    Z[0] = ss.get_Y()[:2]
-    
-    simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
-    if rank == 0:    
-        data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-        fout = open('pers_frict15.dat','wr')
-        cPickle.dump((state,data),fout)
-        fout.close()
+        Gamma,Z,Y,Shocks,y = {},{},{},{},{}
+        Gamma[0] = np.zeros((N,4))
         
-if rank == 0:
-    utilities.sendMessage('Finished Frictions')
-    
+        steadystate.calibrate(Para)
+        ss = steadystate.steadystate(zip(np.zeros((1,4)),np.ones(1)))
+        Z[0] = ss.get_Y()[:2]
+        
+        simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
+        if rank == 0:    
+            data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
+            fout = open('pers15.dat','wr')
+            cPickle.dump((state,data),fout)
+            fout.close()
+            
+    if rank == 0:
+        utilities.sendMessage('Finished Persistence')
+        utilities.sendMessage('Starting Financial Frictions')
+        
+    for rho in np.linspace(0.0,0.6,6):
+        if rank ==0:
+            #utilities.sendMessage(str(rho))
+            print rho
+        np.random.set_state(state)
+        Para.sigma_e[:2] = get_stdev(rho)
+        Para.phat[2] = 0.001
+        
+        Gamma,Z,Y,Shocks,y = {},{},{},{},{}
+        Gamma[0] = np.zeros((N,4))
+        
+        steadystate.calibrate(Para)
+        ss = steadystate.steadystate(zip(np.zeros((1,4)),np.ones(1)))
+        Z[0] = ss.get_Y()[:2]
+        
+        simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
+        if rank == 0:    
+            data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
+            fout = open('pers_frict15.dat','wr')
+            cPickle.dump((state,data),fout)
+            fout.close()
+            
+    if rank == 0:
+        utilities.sendMessage('Finished Frictions')
+        
+        
+def run_friction_experiment():
+    if rank == 0:
+        utilities.sendMessage('Starting Friction Experiment')
+    Para.sigma_e[:2] = get_stdev(0.6)
+    for frict in [0.,0.001,0.002,0.004]:
+        if rank ==0:
+            utilities.sendMessage(str(frict))
+            print frict
+        np.random.set_state(state)
+        Para.phat[2] = frict
+        Para.sigma_E = 0.
+        
+        Gamma,Z,Y,Shocks,y = {},{},{},{},{}
+        Gamma[0] = np.zeros((N,4))
+        
+        steadystate.calibrate(Para)
+        ss = steadystate.steadystate(zip(np.zeros((1,4)),np.ones(1)))
+        Z[0] = ss.get_Y()[:2]
+        
+        simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
+        if rank == 0:    
+            data[frict] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
+            fout = open('frict15.dat','wr')
+            cPickle.dump((state,data),fout)
+            fout.close()
+            
+run_friction_experiment()
     

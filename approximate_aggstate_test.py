@@ -323,7 +323,9 @@ class approximate(object):
             C = -np.linalg.solve(DFi[:,y] + DFi[:,e].dot(df),DFi[:,Y].dot(self.dY_Z)+DFi[:,Z].dot(V)).dot(B)
             return solve_sylvester(A,B,C)
             
+            
         self.dy[Z] = dict_fun(dy_Z)
+        
             
         
             

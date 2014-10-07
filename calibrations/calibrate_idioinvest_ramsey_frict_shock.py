@@ -84,7 +84,7 @@ def F(w):
     Ucc = -sigma*c**(-sigma-1)
     Ul = -chi*l**(gamma)
     Ull = -chi*gamma*l**(gamma-1)
-    A = np.exp(Eps+nu_a_+eps_p+eps_t)    
+    A = np.exp(nu_a_+eps_p+eps_t)    
     
     r_k = A * xi_k*(xi_k-1) * k_**(xi_k-2) * nl**xi_l
     fnn = A  * xi_l*(xi_l-1) * k_**(xi_k) * nl**(xi_l-2)
