@@ -44,10 +44,10 @@ def run_sigma_e_experiment():
         Para.sigma_e[:2] = [0.,sigma_e]
         
         Gamma,Z,Y,Shocks,y = {},{},{},{},{}
-        Gamma[0] = np.zeros((N,4))
+        Gamma[0] = np.zeros((N,3))
         
         steadystate.calibrate(Para)
-        ss = steadystate.steadystate(zip(np.zeros((1,4)),np.ones(1)))
+        ss = steadystate.steadystate(zip(np.zeros((1,3)),np.ones(1)))
         Z[0] = ss.get_Y()[:2]
         
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
@@ -61,7 +61,7 @@ def run_sigma_e_experiment():
         utilities.sendMessage('Finished sigma_e')
         utilities.sendMessage('Starting beta experiment')
     
-    Para.sigma_e = 0.07
+    Para.sigma_e = [0.,0.07]
     for beta in np.linspace(0.97,0.99,6):
         if rank ==0:
             utilities.sendMessage(str(beta))
@@ -70,10 +70,10 @@ def run_sigma_e_experiment():
         Para.beta = beta
         
         Gamma,Z,Y,Shocks,y = {},{},{},{},{}
-        Gamma[0] = np.zeros((N,4))
+        Gamma[0] = np.zeros((N,3))
         
         steadystate.calibrate(Para)
-        ss = steadystate.steadystate(zip(np.zeros((1,4)),np.ones(1)))
+        ss = steadystate.steadystate(zip(np.zeros((1,3)),np.ones(1)))
         Z[0] = ss.get_Y()[:2]
         
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
