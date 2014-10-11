@@ -59,9 +59,11 @@ def run_sigma_e_experiment():
             
     if rank == 0:
         utilities.sendMessage('Finished sigma_e')
+
+def run_beta_experiment():
+    if rank == 0:
         utilities.sendMessage('Starting beta experiment')
-    
-    Para.sigma_e = [0.,0.07]
+    Para.sigma_e[:2] = [0.,0.07]
     for beta in np.linspace(0.97,0.99,6):
         if rank ==0:
             utilities.sendMessage(str(beta))
@@ -86,5 +88,5 @@ def run_sigma_e_experiment():
     if rank == 0:
         utilities.sendMessage('Finished beta experiment')
 
-run_sigma_e_experiment()
-    
+#run_sigma_e_experiment()
+run_beta_experiment()
