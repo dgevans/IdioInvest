@@ -113,5 +113,28 @@ def run_friction_experiment():
             cPickle.dump((state,data),fout)
             fout.close()
             
-run_friction_experiment()
+def run_long_simulation():
+    if rank == 0:
+        utilities.sendMessage('Starting long simulation')
+    N = 30000
+    Para.k = 48*15
+    Para.sigma_e[:2] = get_stdev(0.6)
+    Para.phat[2] = 0.
+    Para.sigma_E = 0.
+    Gamma,Z,Y,Shocks,y = {},{},{},{},{}
+    Gamma[0] = np.zeros((N,4))
+    
+    steadystate.calibrate(Para)
+    ss = steadystate.steadystate(zip(np.zeros((1,4)),np.ones(1)))
+    Z[0] = ss.get_Y()[:2]
+    
+    simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
+    if rank == 0:    
+        data = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
+        fout = open('long_sim.dat','wr')
+        cPickle.dump((state,data),fout)
+        fout.close()
+        utilities.sendMessage('Finished long simulation')
+            
+run_long_simulation()
     

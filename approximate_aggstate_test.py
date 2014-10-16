@@ -111,6 +111,7 @@ IZYhat = None
 Para = None
 dY_Z0 = None
 k = None
+degenerate = False
 
 shock = None
 
@@ -196,7 +197,11 @@ class approximate(object):
         #    cluster,labels = comm.bcast((cluster,labels))
         #else:
         #    cluster,labels = comm.bcast(None)
-        cluster,labels = kmeans2(self.Gamma,self.Gamma[:k,:],minit='matrix')
+        if not degenerate:
+            cluster,labels = kmeans2(self.Gamma,self.Gamma[:k,:],minit='matrix')
+        else:
+            cluster = np.zeros((1,self.Gamma.shape[1]))
+            labels = np.zeros(len(self.Gamma),dtype=int)
         weights = (labels == np.arange(k).reshape(-1,1)).dot(self.Gamma_weights)
         #weights = (labels-np.arange(k).reshape(-1,1) ==0).sum(1)/float(len(self.Gamma))
         #Para.nomalize(cluster,weights)

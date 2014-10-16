@@ -37,6 +37,8 @@ neps = len(sigma_e)
 
 phat = np.array([-0.01,-0.005,0.0005])
 
+temp = 1.
+
 
 
 def F(w):
@@ -84,7 +86,7 @@ def F(w):
     Ucc = -sigma*c**(-sigma-1)
     Ul = -chi*l**(gamma)
     Ull = -chi*gamma*l**(gamma-1)
-    A = np.exp(nu_a_+eps_p+eps_t)    
+    A = np.exp((1-temp)*Eps*xi_l + nu_a_+eps_p+eps_t)    
     
     r_k = A * xi_k*(xi_k-1) * k_**(xi_k-2) * nl**xi_l
     fnn = A  * xi_l*(xi_l-1) * k_**(xi_k) * nl**(xi_l-2)
@@ -121,7 +123,7 @@ def F(w):
     ret[18] = rho3hat_ - (1-tau_k) *rho3_ #temp2
     ret[19] = foc_R - (-beta*EUc_mu*k_ + rho2_ ) #foc_alpha2
     ret[20] = nu_e - nu_l*(nu_e_ + eps_l_p) - (1-nu_l)*mu_e
-    ret[21] = w_e - np.exp(nu_e_+ eps_l_p + eps_l_t)
+    ret[21] = w_e - np.exp(temp*Eps+nu_e_+ eps_l_p + eps_l_t)
     ret[22] = b_ - (x_*m_/Alpha_ - k_)
     ret[23] = lamb_ - ((rho2_ -beta*k_*EUc_mu + beta*Eta*b_)*dpsi_hat*W + beta*Eta*psi_hat*W)
     ret[24] = labor_res - (l*w_e - nl - psi)
@@ -167,7 +169,7 @@ def G(w):
     ret[9] = B_ - b_
     ret[10] = logm-0.
     
-    ret[11] = T + Gov#- (tau_k*pi + tau_l*W*w_e*l - Gov)
+    ret[11] = T+Gov-.07#- (tau_k*pi + tau_l*W*w_e*l - Gov)
     ret[12] = K_ - k_
     ret[13] = foc_tau_k
     ret[14] = foc_R
@@ -301,7 +303,7 @@ def GSS(YSS,y_i,weights):
     
     return np.hstack(
     [weights.dot(K - k_), weights.dot(f - c - Gov - K), weights.dot(l*w_e - nl), weights.dot(pi*mu*Uc + rho3_/beta+pi*Zeta), weights.dot(W*w_e*l*Uc*mu + phi1 + W*w_e*l*Zeta),
-     Alpha_-Alpha2_,weights.dot(foc_R), weights.dot((1-tau_l)*w_e*l*Uc*mu+ (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta),T+Gov,Zeta,weights.dot(B_-b_)]#weights.dot(Zeta + Uc*mu),weights.dot(T - (tau_k*pi + tau_l*W*w_e*l-Gov)) ]    
+     Alpha_-Alpha2_,weights.dot(foc_R), weights.dot((1-tau_l)*w_e*l*Uc*mu+ (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta),T+Gov-0.07,Zeta,weights.dot(B_-b_)]#weights.dot(Zeta + Uc*mu),weights.dot(T - (tau_k*pi + tau_l*W*w_e*l-Gov)) ]    
     )
     
     
