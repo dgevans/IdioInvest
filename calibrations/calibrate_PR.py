@@ -78,19 +78,19 @@ def F(w):
     
     
     
-    ret[4] = x_*Uc/(beta*EUc) + Uc*((1-tau)*(1-xi_l)*f + (1-delta_i)*k_ - R_ *k_) + Uc*W - Uc*c - x #x
+    ret[4] = x_*Uc/(beta*EUc) + Uc*((1-tau)*((1-xi_l)*f-delta_i*k_) - (R_-1.) *k_) + Uc*W - Uc*c - x #x
     ret[5] = Alpha - m*Uc #rho1
-    ret[6] = r -  ( (1-tau)*fk + 1 - delta_i )#r
+    ret[6] = r -  ( (1-tau)*(fk-delta_i) + 1 )#r
     ret[7] = W - fl#phi2
     ret[8] = nu_a - (nu*(nu_a_+eps_p) + (1-nu)*mu_a ) #a
     
     #ret[9] = (Uc + Ucc*mu*(x - Uc/Ucc) - x_*Ucc*mu_/(beta*EUc) 
     #            - rho1*m*Ucc - rho2_*m_*R_*Ucc - rho3_*m_*r*Ucc - Xi )
-    ret[9] = (Uc + x_*Ucc/(beta*EUc) *(mu-mu_) +Ucc*mu*((1-tau)*(1-xi_l)*f + (1-delta_i)*k_ - R_ *k_ 
+    ret[9] = (Uc + x_*Ucc/(beta*EUc) *(mu-mu_) +Ucc*mu*((1-tau)*((1-xi_l)*f-delta_i*k_) - (R_-1.) *k_ 
                 +W-c-Uc/Ucc) - rho1*m*Ucc - rho2_*m_*R_*Ucc - rho3_*m_*r*Ucc - Xi )
                 
     ret[10] = (Uc*mu*(1-tau)*(1-xi_l)*fl  - rho3_*m_*(1-tau)*flk*Uc  - phi*fll - Eta + fl*Xi)
-    ret[11] = foc_k - ( mu*Uc*( (1-tau)*(1-xi_l)*fk + (1-delta_i) - R_) - rho3_*m_*(1-tau)*fkk*Uc
+    ret[11] = foc_k - ( mu*Uc*( (1-tau)*((1-xi_l)*fk-delta_i) -(R_-1)) - rho3_*m_*(1-tau)*fkk*Uc
                         -phi*flk - Xi_/beta + (fk + 1 - Delta)*Xi ) #fock
     ret[12] = rho1_ + rho2_ + rho3_
     ret[13] = res - (f +(1-Delta)*k_ - c - Gov - k)
@@ -113,12 +113,15 @@ def G(w):
     logXi,logAlpha,logK_,R_,W,tau,Eta = w[ny+ne:ny+ne+nY] #Y
     logm_,muhat_,nu_a_= w[ny+ne+nY:ny+ne+nY+nz] #z
     logXi,logAlpha = w[ny+ne+nY+nz+nv+n_p:ny+ne+nY+nz+nv+n_p+nZ] #Z
+    eps_p,eps_t= w[ny+ne+nY+nz+nv+n_p+nZ:ny+ne+nY+nz+nv+n_p+nZ+neps] #shock
     Eps = w[ny+ne+nY+nz+nv+n_p+nZ+neps] #aggregate shock
     
     c,l,k_,m,m_ = np.exp(logc),np.exp(logl),np.exp(logk_),np.exp(logm),np.exp(logm_)
     K_ = np.exp(logK_)
     Uc = c**(-sigma)
     mu,mu_ = muhat*m,muhat_*m_    
+    
+    delta_i = nu_a_+eps_p+eps_t + Delta  
     
     fk = xi_k * k_**(xi_k-1) * l**xi_l
     f =  k_**(xi_k) * l**xi_l
@@ -129,7 +132,7 @@ def G(w):
     
     ret[2] = res
     ret[3] = 1-l
-    ret[4] = m_*rho3_*fk*Uc - mu*Uc*(1-xi_l)*f
+    ret[4] = m_*rho3_*(fk-delta_i)*Uc - mu*Uc*((1-xi_l)*f-delta_i)
     ret[5] = logm-0.
     ret[6] = mu*Uc + phi
     
@@ -200,14 +203,14 @@ def Finv(YSS,z):
     f =  k_**(xi_k) * l**xi_l
     
     
-    x_ = -( Uc*((1-tau)*(1-xi_l)*f + (1-delta_i)*k_- 1/beta*k_) +Uc*W - Uc*c )/(1/beta-1)
+    x_ = -( Uc*((1-tau)*(1-xi_l)*(f-delta_i*k_) + k_- 1/beta*k_) +Uc*W - Uc*c )/(1/beta-1)
     
     
     
-    rho3 = (Uc*mu*((1-tau)*(1-xi_l)*(fk-fl*flk/fll) + 1 - delta_i - 1/beta) + Eta*flk/fll - Xi/beta + ((fk-fl*flk/fll)+1-Delta)*Xi  ) / (m*(1-tau)*Uc*(fkk-flk*flk/fll))
+    rho3 = (Uc*mu*((1-tau)*(1-xi_l)*(fk-delta_i-fl*flk/fll) + 1 - 1/beta) + Eta*flk/fll - Xi/beta + ((fk-fl*flk/fll)+1-Delta)*Xi  ) / (m*(1-tau)*Uc*(fkk-flk*flk/fll))
     phi = (Uc*mu*(1-tau)*(1-xi_l)*fl - rho3*m*(1-tau)*flk*Uc - Eta + fl *Xi)/fll
     
-    rho1 = (Uc +Ucc*mu*((1-tau)*(1-xi_l)*f + (1-delta_i)*k_ - R_ *k_ 
+    rho1 = (Uc +Ucc*mu*((1-tau)*((1-xi_l)*f-delta_i*k_) + k_ - R_ *k_ 
                 +W-c-Uc/Ucc)   - Xi)/(m*Ucc*(1-1/beta))
     
     rho2 = - rho1 - rho3
@@ -215,7 +218,7 @@ def Finv(YSS,z):
     foc_R = k_*Uc*mu - rho2*m*Uc
     
     
-    foc_k = ( mu*Uc*( (1-tau)*(1-xi_l)*fk + (1-delta_i) - R_) - rho3*m*(1-tau)*fkk*Uc
+    foc_k = ( mu*Uc*( (1-tau)*((1-xi_l)*fk-delta_i) + 1 - R_) - rho3*m*(1-tau)*fkk*Uc
                         -phi*flk - Xi/beta + (fk + 1 - Delta)*Xi )
                 
     res = (f + (1-Delta)*k_ - c - Gov - k_)
@@ -239,12 +242,14 @@ def GSS(YSS,y_i,weights):
     f =  k_**(xi_k) * l**xi_l    
     mu = muhat*m
     
+    delta_i = Delta + nu_a
+    
     #mu = muhat*m
     K = np.exp(logK_)
     Uc = c**(-sigma)    
     
     return np.hstack(
-    [weights.dot(K - k_), weights.dot(res), weights.dot(1 - l), weights.dot( m*rho3_*fk*Uc - mu*Uc*(1-xi_l)*f), R_-1/beta,
+    [weights.dot(K - k_), weights.dot(res), weights.dot(1 - l), weights.dot( m*rho3_*(fk-delta_i)*Uc - mu*Uc*((1-xi_l)*f-delta_i*k_)), R_-1/beta,
      weights.dot(mu*Uc + phi), weights.dot(foc_R_) ]
     )
     
