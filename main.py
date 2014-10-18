@@ -135,6 +135,37 @@ def run_long_simulation():
         cPickle.dump((state,data),fout)
         fout.close()
         utilities.sendMessage('Finished long simulation')
+        
+def run_span_of_control():
+    if rank == 0:
+        utilities.sendMessage('Starting span of control')
+    N = 15000
+    Para.k = 48*10
+    Para.sigma_e[:2] = get_stdev(0.6)
+    Para.phat[2] = 0.
+    Para.sigma_E = 0.
+    for nu in np.linspace(0.6,0.88,6):
+        np.random.set_state(state)
+        if rank ==0:
+            utilities.sendMessage(str(nu))
+            print nu
+        Para.xi_l = 0.66*nu
+        Para.xi_k = 0.34*nu
+        approximate.calibrate(Para)
+        Gamma,Z,Y,Shocks,y = {},{},{},{},{}
+        Gamma[0] = np.zeros((N,4))
+        
+        steadystate.calibrate(Para)
+        ss = steadystate.steadystate(zip(np.zeros((1,4)),np.ones(1)))
+        Z[0] = ss.get_Y()[:2]
+        
+        simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
+        if rank == 0:    
+            data[nu] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
+            fout = open('span_sim.dat','wr')
+            cPickle.dump((state,data),fout)
+            fout.close()
+            utilities.sendMessage('Finished span of control')
             
-run_long_simulation()
+run_span_of_control()
     
