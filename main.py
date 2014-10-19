@@ -116,8 +116,9 @@ def run_friction_experiment():
 def run_long_simulation():
     if rank == 0:
         utilities.sendMessage('Starting long simulation')
-    N = 30000
-    Para.k = 48*15
+    N = 50000
+    T = 300
+    Para.k = 5*16*12
     Para.sigma_e[:2] = get_stdev(0.6)
     Para.phat[2] = 0.
     Para.sigma_E = 0.
@@ -167,5 +168,5 @@ def run_span_of_control():
             fout.close()
             utilities.sendMessage('Finished span of control')
             
-run_span_of_control()
+run_long_simulation()
     
