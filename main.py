@@ -169,13 +169,15 @@ def run_span_of_control():
             utilities.sendMessage('Finished span of control')
             
 def run_rho_experiment_ce():
-    if rank == 0:
-        utilities.sendMessage('Starting Persistence')
+    #if rank == 0:
+    #    utilities.sendMessage('Starting Persistence')
     import calibrations.calibrate_competitive as Para
     Para.k = 48*7
+    Para.tau_k = 0.
+    Para.tau_l = 0.
     for rho in np.linspace(0.0,0.6,6):
         if rank ==0:
-            utilities.sendMessage(str(rho))
+            #utilities.sendMessage(str(rho))
             print rho
         np.random.set_state(state)
         Para.sigma_e[:2] = get_stdev(rho)
@@ -186,7 +188,7 @@ def run_rho_experiment_ce():
         
         steadystate.calibrate(Para)
         ss = steadystate.steadystate(zip(np.zeros((1,3)),np.ones(1)))
-        Z[0] = ss.get_Y()[:2]
+        Z[0] = ss.get_Y()[:1]
         
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
