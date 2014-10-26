@@ -37,7 +37,7 @@ neps = len(sigma_e)
 
 phat = np.array([-0.01,-0.005,0.0005])
 
-temp = 1.
+temp = 0.
 
 
 

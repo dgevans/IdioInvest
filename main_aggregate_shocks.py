@@ -62,10 +62,10 @@ for t,t0 in [(10,0),(100,9),(500,99),(1000,499),(1500,999),(2000,1499)]:
         y3 = np.vstack([y_i[np.newaxis,:,:] for y_i in y.values()])
     
     if rank == 0:
-        fout = file('Agg_simulations_shock_labor.dat','wr')
+        fout = file('Agg_simulations_shock_new.dat','wr')
         cPickle.dump((Y1,Y2,Y3),fout)
         fout.close()
-        fout = file('Agg_simulations_shock__labor_y.dat','wr')
+        fout = file('Agg_simulations_shock_y_new.dat','wr')
         cPickle.dump((y1,y2,y3),fout)
         fout.close()
     

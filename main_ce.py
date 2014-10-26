@@ -1,5 +1,5 @@
 import steadystate
-import calibrations.calibrate_PR as Para
+import calibrations.calibrate_competitive as Para
 from scipy.optimize import root
 import numpy as np
 import cPickle
@@ -21,18 +21,18 @@ def get_stdev(rho):
     std_iid = np.sqrt(var_a*(1-frac))
     return [std_pers,std_iid]
 
-N = 5000
+N = 30000
 Para.k = 400
 steadystate.calibrate(Para)
 
 v = simulate.v
 v.block =True
-v.execute('import calibrations.calibrate_PR as Para')
-v.execute('Para.k = 100')
-v.execute('Para.beta =0.99')
+v.execute('import calibrations.calibrate_competitive as Para')
+v.execute('Para.k = 504')
+v.execute('Para.beta =0.96')
 v.execute('import approximate_aggstate_test as approximate')
 v.execute('approximate.degenerate = False')
-v['sig'] = np.array([0.,0.07])
+v['sig'] = get_stdev(0.6)
 v.execute('Para.sigma_e[:2] = sig')
 #v.execute('Para.phat[2] = 0.00')
 v.execute('approximate.calibrate(Para)')
@@ -48,7 +48,7 @@ Gamma[0] = np.zeros((N,3))
 
 ss = steadystate.steadystate(zip(np.zeros((1,3)),np.ones(1)))
 Z[0] = ss.get_Y()[:1]
-simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,200) #simulate 150 period with no aggregate shocks
+simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,300) #simulate 150 period with no aggregate shocks
     
     
     

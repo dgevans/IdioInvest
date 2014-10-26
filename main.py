@@ -168,5 +168,35 @@ def run_span_of_control():
             fout.close()
             utilities.sendMessage('Finished span of control')
             
-run_long_simulation()
+def run_rho_experiment_ce():
+    if rank == 0:
+        utilities.sendMessage('Starting Persistence')
+    import calibrations.calibrate_competitive as Para
+    Para.k = 48*7
+    for rho in np.linspace(0.0,0.6,6):
+        if rank ==0:
+            utilities.sendMessage(str(rho))
+            print rho
+        np.random.set_state(state)
+        Para.sigma_e[:2] = get_stdev(rho)
+        Para.phat[2] = 0.
+        
+        Gamma,Z,Y,Shocks,y = {},{},{},{},{}
+        Gamma[0] = np.zeros((N,3))
+        
+        steadystate.calibrate(Para)
+        ss = steadystate.steadystate(zip(np.zeros((1,3)),np.ones(1)))
+        Z[0] = ss.get_Y()[:2]
+        
+        simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
+        if rank == 0:    
+            data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
+            fout = open('pers15_ce.dat','wr')
+            cPickle.dump((state,data),fout)
+            fout.close()
+            
+    if rank == 0:
+        utilities.sendMessage('Finished Persistence')
+            
+run_rho_experiment_ce()
     
