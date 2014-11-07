@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_idioinvest_ramsey_frict_shock as Para
+import calibrations.calibrate_idioinvest_decom as Para
 import approximate_aggstate_test as approximate
 import numpy as np
 import simulate_MPI as simulate
@@ -25,8 +25,8 @@ def get_stdev(rho):
     return [std_pers,std_iid]
     
 T = 202
-N = 15000
-Para.k = 48*7
+N = 470*64
+Para.k = 16*4*7
 
 #simulate persistence
 data = {}
@@ -35,7 +35,7 @@ state = np.random.get_state()
 def run_rho_experiment():
     if rank == 0:
         utilities.sendMessage('Starting Persistence')
-    for rho in np.linspace(0.6,0.6,1):
+    for rho in np.linspace(0.,0.6,10):
         if rank ==0:
             utilities.sendMessage(str(rho))
             print rho
@@ -59,6 +59,9 @@ def run_rho_experiment():
             
     if rank == 0:
         utilities.sendMessage('Finished Persistence')
+        
+def run_frict_experiment():
+    if rank ==0:
         utilities.sendMessage('Starting Financial Frictions')
         
     for rho in np.linspace(0.0,0.6,6):
@@ -200,5 +203,5 @@ def run_rho_experiment_ce():
     if rank == 0:
         utilities.sendMessage('Finished Persistence')
             
-run_rho_experiment_ce()
+run_rho_experiment()
     
