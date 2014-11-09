@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_idioinvest_ramsey_frict_shock as Para
+import calibrations.calibrate_idioinvest_decom as Para
 import approximate_aggstate_test as approximate
 import numpy as np
 import simulate_MPI as simulate

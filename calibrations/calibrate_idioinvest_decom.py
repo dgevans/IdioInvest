@@ -26,8 +26,8 @@ Gov = 0.17
 
 n = 4 # number of measurability constraints
 nG = 4 # number of aggregate measurability constraints.
-ny = 34 # number of individual controls (m_{t},mu_{t},c_{t},l_{t},rho1_,rho2,phi,x_{t-1},kappa_{t-1}) Note that the forward looking terms are at the end
-ne = 11 # number of Expectation Terms (E_t u_{c,t+1}, E_t u_{c,t+1}mu_{t+1} E_{t}x_{t-1 E_t rho_{1,t-1}} [This makes the control x_{t-1},rho_{t-1} indeed time t-1 measuable])
+ny = 37 # number of individual controls (m_{t},mu_{t},c_{t},l_{t},rho1_,rho2,phi,x_{t-1},kappa_{t-1}) Note that the forward looking terms are at the end
+ne = 16 # number of Expectation Terms (E_t u_{c,t+1}, E_t u_{c,t+1}mu_{t+1} E_{t}x_{t-1 E_t rho_{1,t-1}} [This makes the control x_{t-1},rho_{t-1} indeed time t-1 measuable])
 nY = 16 # Number of aggregates (alpha_1,alpha_2,tau,eta,lambda)
 nz = 4 # Number of individual states (m_{t-1},mu_{t-1})
 nv = 5 # number of forward looking terms (x_t,rho1_t)
@@ -45,8 +45,8 @@ def F(w):
     '''
     Individual first order conditions
     '''
-    logm,muhat,nu_a,nu_e,logc,logl,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_tau_k,rho2_,rho3_,b_,labor_res,res,foc_W,zeta,r_k,dk_dtau,t1,t2,t3,x_,rho2hat_,rho3hat_,lamb_,logk_ = w[:ny] #y
-    EUc,EUc_r,Ex_,Ek_,EUc_mu,Erho2_,Erho3_,Efoc_k,Efoc_tau_k,EUc_rk,Er= w[ny:ny+ne] #e
+    logm,muhat,nu_a,nu_e,logc,logl,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_tau_k,rho2_,rho3_,b_,labor_res,res,foc_W,zeta,r_k,dk_dtau,t1,t2,t3,xi,pi_k,fnk,x_,rho2hat_,rho3hat_,lamb_,logk_ = w[:ny] #y
+    EUc,EUc_r,Ex_,Ek_,EUc_mu,Erho2_,Erho3_,Efoc_k,Efoc_tau_k,EUc_rk,Er,EXi_r,EXi,EmuUcpi,EmuUcpi_k, Efnk_phi2= w[ny:ny+ne] #e
     logXi,logAlpha,logK_,Alpha2_,W,tau_l,tau_k,Eta,T,Zeta,B_,T1,T2,T3,dK_dtau,tauhat = w[ny+ne:ny+ne+nY] #Y
     logm_,muhat_,nu_a_,nu_e_= w[ny+ne+nY:ny+ne+nY+nz] #z
     x,rho2hat,rho3hat,lamb,logk = w[ny+ne+nY+nz:ny+ne+nY+nz+nv] #v
@@ -91,11 +91,10 @@ def F(w):
     fnn = A  * xi_l*(xi_l-1) * k_**(xi_k) * nl**(xi_l-2)
     fn = A * xi_l * k_**(xi_k) * nl**(xi_l-1)
     fk = A * xi_k * k_**(xi_k-1) * nl**xi_l + (1-delta)
-    fnk = A * xi_k * xi_l * k_**(xi_k-1) * nl**(xi_l-1)
     
-    pi_k = A*(1-xi_l)*xi_k*k_**(xi_k-1)*nl**(xi_l) + (1-delta)
     pi_n = A*(1-xi_l)*xi_l*k_**(xi_k)*nl**(xi_l-1) 
     cov_Uc_r = EUc_r - EUc*Er
+    covXi_r = EXi_r - EXi*Er
     
     ret = np.empty(ny+n,dtype=w.dtype)
     ret[0] = x_ - Ex_ # x is independent of eps
@@ -132,15 +131,18 @@ def F(w):
     ret[27] = res - (f - c - Gov - k)
     ret[28] = zeta -Zeta
     ret[29] = r_k - A * xi_k*(xi_k-1) * k_**(xi_k-2) * nl**xi_l
-    ret[30] = t1 - (mu*Uc*pi - dk_dtau*mu*Uc*((1-tau_k)*pi_k-R_))*(1-tau_k)/(R_*dK_dtau*Xi)
-    ret[31] = t2 - dk_dtau*fnk*phi2*(1-tau_k)/(R_*dK_dtau*Xi)
-    ret[32] = t3 - (dK_dtau*(Xi_/beta - R_*Xi) + dk_dtau*cov_Uc_r*Xi/EUc)*(1-tau_k)/(R_*dK_dtau*Xi) 
+    ret[30] = t1 - (EmuUcpi - dk_dtau*((1-tau_k)*EmuUcpi_k-EUc_mu*R_)  )*(1-tau_k)/(R_*dK_dtau*EXi)
+    ret[31] = t2 - dk_dtau*Efnk_phi2*(1-tau_k)/(R_*dK_dtau*EXi)
+    ret[32] = t3 - (dK_dtau*(Xi_/beta - R_*EXi) + dk_dtau*cov_Uc_r*EXi/EUc - dk_dtau*covXi_r)*(1-tau_k)/(R_*dK_dtau*EXi) 
     ret[33] = dk_dtau - EUc_r/((1-tau_k)*EUc_rk)
+    ret[34] = xi - Xi
+    ret[35] = pi_k - (A*(1-xi_l)*xi_k*k_**(xi_k-1)*nl**(xi_l) + (1-delta))
+    ret[36] = fnk - (A * xi_k * xi_l * k_**(xi_k-1) * nl**(xi_l-1))
     
-    ret[34] = Efoc_k #k_
-    ret[35] = mu_  - EUc_mu/EUc - m_*lamb_/Alpha_#muhat
-    ret[36] = Alpha_ - beta*Ri_*m_*EUc #rho2_
-    ret[37] = Alpha_ - beta*(1-tau_k)*m_*EUc_r #rho3
+    ret[37] = Efoc_k #k_
+    ret[38] = mu_  - EUc_mu/EUc - m_*lamb_/Alpha_#muhat
+    ret[39] = Alpha_ - beta*Ri_*m_*EUc #rho2_
+    ret[40] = Alpha_ - beta*(1-tau_k)*m_*EUc_r #rho3
     
     return ret
     
@@ -148,10 +150,10 @@ def G(w):
     '''
     Aggregate equations
     '''
-    logm,muhat,nu_a,nu_e,logc,logl,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_tau_k,rho2_,rho3_,b_,labor_res,res,foc_W,zeta,r_k,dk_dtau,t1,t2,t3,x_,rho2hat_,rho3hat_,lamb_,logk_= w[:ny] #y
+    logm,muhat,nu_a,nu_e,logc,logl,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_tau_k,rho2_,rho3_,b_,labor_res,res,foc_W,zeta,r_k,dk_dtau,t1,t2,t3,xi,pi_k,fnk,x_,rho2hat_,rho3hat_,lamb_,logk_= w[:ny] #y
     logXi,logAlpha,logK_,Alpha2_,W,tau_l,tau_k,Eta,T,Zeta,B_,T1,T2,T3,dK_dtau,tauhat = w[ny+ne:ny+ne+nY] #Y
     logm_,muhat_,nu_a_,nu_e_= w[ny+ne+nY:ny+ne+nY+nz] #z
-    logXi,logAlpha = w[ny+ne+nY+nz+nv+n_p:ny+ne+nY+nz+nv+n_p+nZ] #Z
+    logXi,logAlpha_ = w[ny+ne+nY+nz+nv+n_p:ny+ne+nY+nz+nv+n_p+nZ] #Z
     Eps = w[ny+ne+nY+nz+nv+n_p+nZ+neps] #aggregate shock
     
     c,l,k_,nl,m = np.exp(logc),np.exp(logl),np.exp(logk_),np.exp(lognl),np.exp(logm)
@@ -179,7 +181,7 @@ def G(w):
     ret[14] = tauhat - (tau_k-(T1+T2+T3))
     ret[15] = dK_dtau - dk_dtau
     
-    ret[16] = T+Gov-.07#- (tau_k*pi + tau_l*W*w_e*l - Gov)
+    ret[16] = T+Gov#- (tau_k*pi + tau_l*W*w_e*l - Gov)
     ret[17] = K_ - k_
     ret[18] = foc_tau_k
     ret[19] = foc_R
@@ -190,7 +192,7 @@ def f(y):
     '''
     Expectational equations that define e=Ef(y)
     '''
-    logm,muhat,nu_a,nu_e,logc,logl,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_tau_k,rho2_,rho3_,b_,labor_res,res,foc_W,zeta,r_k,dk_dtau,t1,t2,t3,x_,rho2hat_,rho3hat_,lamb_,logk_ = y
+    logm,muhat,nu_a,nu_e,logc,logl,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_tau_k,rho2_,rho3_,b_,labor_res,res,foc_W,zeta,r_k,dk_dtau,t1,t2,t3,xi,pi_k,fnk,x_,rho2hat_,rho3hat_,lamb_,logk_ = y
     
     c,k_ = np.exp(logc),np.exp(logk_)
     Uc = c**(-sigma)
@@ -211,6 +213,12 @@ def f(y):
     ret[8] = pi*mu*Uc + rho3_/beta + pi*zeta
     ret[9] = Uc*r_k
     ret[10] = r
+    ret[11] = xi * r
+    ret[12] = xi
+    ret[13] = mu*Uc*pi
+    ret[14] = mu*Uc*pi_k 
+    ret[15] = fnk*phi2
+    
         
     
     return ret
@@ -298,9 +306,11 @@ def Finv(YSS,z):
     t2 = dk_dtau*fnk*phi2*(1-tau_k)/(R_*dK_dtau*Xi)
     t3 = (dK_dtau*(Xi/beta - R_*Xi))*(1-tau_k)/(R_*dK_dtau*Xi)*np.ones(c.shape) 
     
+    xi = Xi*np.ones(c.shape)
+    
     #logm,muhat,nu_a,nu_e,logc,    logl,       lognl,    w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_tau_k,rho2_,rho3_,b_,labor_res,res,foc_W,zeta,x_,rho2hat_,rho3hat_,lamb_,logk_
     return np.vstack((
-    logm,muhat,nu_a,nu_e,np.log(c),np.log(l),np.log(nl),w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_tau_k,rho2,rho3,b_,  labor_res,res,foc_W,zeta,r_k,dk_dtau,t1,t2,t3,x_,rho2hat_,rho3hat_,lamb,np.log(k_)   
+    logm,muhat,nu_a,nu_e,np.log(c),np.log(l),np.log(nl),w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_tau_k,rho2,rho3,b_,  labor_res,res,foc_W,zeta,r_k,dk_dtau,t1,t2,t3,xi,pi_k,fnk,x_,rho2hat_,rho3hat_,lamb,np.log(k_)   
     ))
     
     
@@ -310,7 +320,7 @@ def GSS(YSS,y_i,weights):
     '''
     Aggregate conditions for the steady state
     '''
-    logm,muhat,nu_a,nu_e,logc,logl,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_tau_k,rho2_,rho3_,b_,labor_res,res,foc_W,zeta,r_k,dk_dtau,t1,t2,t3,x_,rho2hat_,rho3hat_,lamb_,logk_  = y_i
+    logm,muhat,nu_a,nu_e,logc,logl,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_tau_k,rho2_,rho3_,b_,labor_res,res,foc_W,zeta,r_k,dk_dtau,t1,t2,t3,xi,pi_k,fnk,x_,rho2hat_,rho3hat_,lamb_,logk_  = y_i
     logXi,logAlpha,logK_,Alpha2_,W,tau_l,tau_k,Eta,T,Zeta,B_,T1,T2,T3,dK_dtau,tauhat = YSS
   
     Alpha_ = np.exp(logAlpha)
@@ -321,7 +331,7 @@ def GSS(YSS,y_i,weights):
     
     return np.hstack(
     [weights.dot(K - k_), weights.dot(f - c - Gov - K), weights.dot(l*w_e - nl), weights.dot(pi*mu*Uc + rho3_/beta+pi*Zeta), weights.dot(W*w_e*l*Uc*mu + phi1 + W*w_e*l*Zeta),
-     Alpha_-Alpha2_,weights.dot(foc_R), weights.dot((1-tau_l)*w_e*l*Uc*mu+ (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta),T+Gov-0.07,Zeta,weights.dot(B_-b_),
+     Alpha_-Alpha2_,weights.dot(foc_R), weights.dot((1-tau_l)*w_e*l*Uc*mu+ (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta),T+Gov,Zeta,weights.dot(B_-b_),
      weights.dot(T1-t1),weights.dot(T2-t2),weights.dot(T3-t3),tauhat,weights.dot(dK_dtau-dk_dtau)]#weights.dot(Zeta + Uc*mu),weights.dot(T - (tau_k*pi + tau_l*W*w_e*l-Gov)) ]    
     )
     
