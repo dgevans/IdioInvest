@@ -119,6 +119,24 @@ def quadratic_solve2(A,B):
             Q[:,k,l] = np.einsum('ij...,j...->i...',temp,-B[:,k,l])
     return Q
     
+def quadratic_solve3(D,A,B,C,induce = False):
+    '''
+    Solves the equations A*Q(.,D) + B * Q + C = 0.  where D is a diagonal matrix
+    diagonal matrices (assumed to be just the diagonals).
+    '''
+    if not induce:
+        Q = np.empty(C.shape)
+        for i,rho in enumerate(D):
+            temp = np.linalg.inv(rho*A + B)
+            Q[:,:,i] = np.einsum('kl...,l...->k...',temp,-C[...,i])
+        return Q
+    else:
+        Q = np.empty(np.hstack((C.shape,len(D))))
+        for i,rho in enumerate(D):
+            temp = np.linalg.inv(rho*A + B)
+            Q[:,:,i] = np.einsum('kl...,l...->k...',temp,-C)
+        return Q
+    
     
 class dict_fun(object):
     '''
@@ -202,6 +220,12 @@ def parallel_dict_map(F,l):
     for key in keys:
         ret[key] = [t[key] for t in temp]
     return ret
+    
+def transpose_sum(A):
+    '''
+    Returns the sum of A and its transpose
+    '''
+    return A + A.transpose(0,2,1)
     
     
 def sendMessage(message):

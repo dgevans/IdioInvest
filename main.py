@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_idioinvest_decom as Para
-import approximate_aggstate_test as approximate
+import calibrations.calibrate_ramsey_taxrate as Para
+import approximate
 import numpy as np
 import simulate_MPI as simulate
 import utilities
@@ -25,8 +25,8 @@ def get_stdev(rho):
     return [std_pers,std_iid]
     
 T = 202
-N = 200*64
-Para.k = 16*4*5
+N = 200*16*15
+Para.k = 16*4*10
 
 #simulate persistence
 data = {}
