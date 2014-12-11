@@ -35,7 +35,7 @@ state = np.random.get_state()
 def run_rho_experiment():
     if rank == 0:
         utilities.sendMessage('Starting Persistence')
-    for rho in np.linspace(0.,0.6,10):
+    for rho in np.linspace(0.,0.6,6):
         if rank ==0:
             utilities.sendMessage(str(rho))
             print rho

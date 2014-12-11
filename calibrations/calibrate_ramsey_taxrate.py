@@ -36,7 +36,7 @@ nZ = 2 # number of aggregate states
 nEps = 1
 neps = len(sigma_e)
 
-phat = np.array([-0.01,-0.005,0.0005])
+phat = np.array([-0.005,-0.005,0.0005])
 
 temp = 0.
 
@@ -125,9 +125,9 @@ def F(w):
     ret[20] = nu_e - nu_l*(nu_e_ + eps_l_p) - (1-nu_l)*mu_e
     ret[21] = w_e - np.exp(temp*Eps+nu_e_+ eps_l_p + eps_l_t)
     ret[22] = b_ - (x_*m_/Alpha_ - k_)
-    ret[23] = lamb_ - ((rho2_ -beta*k_*EUc_mu + beta*Eta*b_)*dpsi_hat*W + beta*Eta*psi_hat*W)
+    ret[23] = lamb_ - ((rho2_ -beta*k_*EUc_mu - (1-tau_k)*rho3_/(Ri_*(Ri_-1))  + beta*Eta*b_)*dpsi_hat*W + beta*Eta*psi_hat*W)
     ret[24] = labor_res - (l*w_e - nl - psi)
-    ret[25] = foc_W - ((1-tau_l)*w_e*l*Uc*mu + (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta +(rho2_/beta -k_*EUc_mu + Eta*b_)*psi_hat  )
+    ret[25] = foc_W - ((1-tau_l)*w_e*l*Uc*mu + (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta +(rho2_/beta -k_*EUc_mu - (1-tau_k)*rho3_/(Ri_*(Ri_-1))/beta+ Eta*b_)*psi_hat  )
     ret[26] = foc_tau_k - Efoc_tau_k
     ret[27] = res - (f - c - Gov - k)
     ret[28] = zeta -Zeta
@@ -169,7 +169,7 @@ def G(w):
     ret[9] = B_ - b_
     ret[10] = logm-0.
     
-    ret[11] = T+Gov-.07#- (tau_k*pi + tau_l*W*w_e*l - Gov)
+    ret[11] = T+Gov#- (tau_k*pi + tau_l*W*w_e*l - Gov)
     ret[12] = K_ - k_
     ret[13] = foc_tau_k
     ret[14] = foc_R
@@ -303,7 +303,7 @@ def GSS(YSS,y_i,weights):
     
     return np.hstack(
     [weights.dot(K - k_), weights.dot(f - c - Gov - K), weights.dot(l*w_e - nl), weights.dot((pi-k_)*mu*Uc + rho3_/beta+pi*Zeta), weights.dot(W*w_e*l*Uc*mu + phi1 + W*w_e*l*Zeta),
-     R_-1/beta,weights.dot(foc_R), weights.dot((1-tau_l)*w_e*l*Uc*mu+ (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta),T+Gov-0.07,Zeta,weights.dot(B_-b_)]#weights.dot(Zeta + Uc*mu),weights.dot(T - (tau_k*pi + tau_l*W*w_e*l-Gov)) ]    
+     R_-1/beta,weights.dot(foc_R), weights.dot((1-tau_l)*w_e*l*Uc*mu+ (1-tau_l)*phi1/W +phi2 - tau_l*w_e*l*Zeta),T+Gov,Zeta,weights.dot(B_-b_)]#weights.dot(Zeta + Uc*mu),weights.dot(T - (tau_k*pi + tau_l*W*w_e*l-Gov)) ]    
     )
     
     
@@ -329,7 +329,7 @@ def check_extreme(z_i):
     extreme = False
     if z_i[0] < -3. or z_i[0] > 6.:
         extreme = True
-    if z_i[1] > 4. or z_i[1] < -4.:
+    if z_i[1] > 5. or z_i[1] < -5.:
         extreme = True
     return extreme
     

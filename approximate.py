@@ -759,16 +759,19 @@ class approximate(object):
         Yhat_G_Eps = self.integrate(lambda z_i : self.dY(z_i).dot(z_Eps(z_i)))
         Yhat_G_p = self.integrate(lambda z_i: self.dY(z_i).dot(z_p(z_i)))
         Yhat_ZG = self.integrate(lambda z_i : np.tensordot(self.d2Y[Z,z](z_i),z_Eps(z_i),1))
+        Yhat_GZ = self.integrate(lambda z_i : np.einsum('ijk,jl->ilk',self.d2Y[z,Z](z_i),z_p(z_i)))
         Yhat_GG1 = self.integrate(lambda z_i :  quadratic_dot(self.d2Y[Y,z](z_i),Yhat_G_p,z_Eps(z_i)))
         Yhat_GG2 = self.integrate(lambda z_i : quadratic_dot(self.d2Y[z,z](z_i),z_p(z_i),z_Eps(z_i)))
+        Yhat_GG3 = self.integrate(lambda z_i :  quadratic_dot(self.d2Y[z,Y](z_i),z_p(z_i),Yhat_G_Eps))
         Yhat_pG = self.integrate(lambda z_i : np.tensordot(self.d2Y[p,z](z_i),z_Eps(z_i),1))
         Yhat_YGzpG = self.integrate(lambda z_i : np.einsum('ij,jkl,lm->ikm',self.dY(z_i).dot(Izy),self.d2y[p,z](z_i),z_Eps(z_i)) )
         def DFhat_pEps(z_i):
             dSprime_p_i,dZprime_p = dSprime_p(z_i),IZYhat.dot(self.dY_p)
             dSprime_Eps_i,dZprime_Eps = dSprime_Eps(z_i),IZYhat.dot(self.dY_Eps)
             DFi = DF(z_i)[:-n]
-            yprime_ZG = np.einsum('ijk,jkl,km->iml',self.dy[Y,S,Z](z_i),Yhat_ZG,dZprime_p) 
-            yprime_GG = np.tensordot(self.dy[Y](z_i),Yhat_GG1 + Yhat_GG2,1)
+            yprime_ZG = np.einsum('ijk,jkl,km->iml',self.dy[Y,S,Z](z_i),Yhat_ZG,dZprime_p)  + np.einsum('ijk,jkl,km->iml',self.d2y[Y,S,Z](z_i),Yhat_ZG,IZYhat.dot(self.dYGamma_p))
+            yprime_GZ = np.einsum('ijk,jlk,km->ilm',self.dy[Y,S,Z](z_i),Yhat_GZ,dZprime_Eps)  + np.einsum('ijk,jlk,km->ilm',self.d2y[Y,S,Z](z_i),Yhat_GZ,IZYhat.dot(self.dYGamma_Eps))
+            yprime_GG = np.tensordot(self.dy[Y](z_i),Yhat_GG1 + Yhat_GG2+ Yhat_GG3,1)
             yprime_pG = (np.tensordot(self.dytild['pG,Y_pG'](z_i),Yhat_pG,1) 
             + np.einsum('ijkl,jkm->ilm',self.dytild['pG,Y_ZG'](z_i),Yhat_ZG) + np.tensordot(self.dytild['pG,Y_G'](z_i),Yhat_G_Eps,1)
             +np.tensordot(self.dytild['pG,Y_GG'](z_i),Yhat_GG1+Yhat_GG2,1)
@@ -776,12 +779,13 @@ class approximate(object):
             return (self.HFhat[p,Eps](z_i)
                 +np.tensordot(DFi[:,v].dot(Ivy),quadratic_dot(self.d2y[Z,S](z_i),dZprime_p,dSprime_Eps_i)
                 +quadratic_dot(self.d2y[S,Z](z_i),dSprime_p_i,dZprime_Eps)
-                + quadratic_dot(self.d2y[S,S](z_i),dSprime_p_i,dSprime_Eps_i)
+                +quadratic_dot(self.d2y[S,S](z_i),dSprime_p_i,dSprime_Eps_i)
                 +quadratic_dot(self.d2y[Z,Z](z_i),dZprime_p,dZprime_Eps)
                 +np.tensordot(self.d2y[p,z](z_i),z_Eps(z_i),1)
+                +np.tensordot(self.d2y[p,Z](z_i),dZprime_Eps,1)
                 #now for distribution terms
-                +yprime_ZG+yprime_GG+ yprime_pG,1) )
-        
+                +yprime_ZG+yprime_GZ+yprime_GG+ yprime_pG,1) )
+                
         DFhat_pEps = dict_fun(DFhat_pEps)
         ytild_pEps = get_coefficient(DFhat_pEps)
         ytild_YpEps = get_coefficient(lambda z_i : DF(z_i)[:-n,Y] + DF(z_i)[:-n,v].dot(Ivy).dot(self.dy[Z](z_i)).dot(IZYhat))
@@ -831,7 +835,7 @@ class approximate(object):
             return np.vstack((Izy.dot(self.dy[p](z_i)),self.dYGamma_p))
             
         def HGhat(z_i,y1,y2):
-            HG = self.HG(z_i)[nG:,:]
+            HG = self.HG(z_i)[nG:]
             d = self.get_d(z_i)
             HGhat = np.zeros((nY,len(y1),len(y2)))
             for x1 in [y,z,Y,Z,p]:
@@ -886,9 +890,9 @@ class approximate(object):
         '''Now w.r.t p and Gamma'''
         def DF_ytild_pG_inv(z_i):
             DFi,dfi = DF(z_i)[n:],self.df(z_i)
-            return -np.linalg.inv(DFi[:,y] + DFi[:,e].dot(dfi) + DFi[:,v].dot(Ivy).dot(self.dy[z](z_i).dot(Izy)) + DFi[:,v].dot(Ivy))
+            return -np.linalg.inv(DFi[:,y] + DFi[:,e].dot(dfi) + DFi[:,v].dot(Ivy).dot(self.dy[z](z_i)).dot(Izy) + DFi[:,v].dot(Ivy))
         
-        c_pG = dict_fun( lambda z_i: DF_ytild_pG_inv(z_i).dot(DF(z_i)[n:,v].dot(Ivy).dot(self.dy[Y](z_i)) ) )
+        c_pG = dict_fun( lambda z_i: DF_ytild_pG_inv(z_i).dot(DF(z_i)[n:,v]).dot(Ivy).dot(self.dy[Y](z_i)) ) 
         C_pG = T(c_pG)
         temp_pG = np.linalg.inv(np.eye(nY)-C_pG)
         
@@ -908,8 +912,8 @@ class approximate(object):
         )
         
         self.dytild['pG,Y_ZG'] = get_coefficient(
-        lambda z_i : np.tensordot(DF(z_i)[n:,v].dot(Ivy), np.einsum('ijk,kl->ijkl',self.dy[Y,S,Z](z_i),dZGamma_p)
-        +np.einsum('ijk,kl->ijkl',self.d2y[Y,S,Z](z_i),IZYhat.dot(self.dY_p)),1)
+        lambda z_i : np.tensordot(DF(z_i)[n:,v].dot(Ivy), np.einsum('ijk,kl->ijkl',self.dy[Y,S,Z](z_i),IZYhat.dot(self.dY_p))
+        +np.einsum('ijk,kl->ijkl',self.d2y[Y,S,Z](z_i),dZGamma_p),1)
         )
         
         self.dytild['pG,Y_GG'] = get_coefficient(
@@ -918,17 +922,20 @@ class approximate(object):
         
         #now for Y_G lot of terms
         temp_YGZ = self.integrate(lambda z_i : np.einsum('ijk,jl->ilk',self.d2Y[z,Z](z_i),Izy.dot(self.dy[p](z_i))))
+        temp_YGG = self.integrate(lambda z_i : np.einsum('ijk,jl->ilk',self.d2Y[z,Y](z_i),Izy.dot(self.dy[p](z_i))) )
         def DF_ytild_Y_S(z_i):
             DFi,dz_p,hf = self.DF(z_i)[n:],Izy.dot(self.dy[p](z_i)),self.Hf(z_i)
             d = self.get_d(z_i)
-            dSprime_p,dZprime_S = np.vstack((dz_p,self.dYGamma_p)),np.hstack((np.zeros((nZ,nz)),IZYhat))
+            dSprime_p,dZprime_S,dZprime_p = np.vstack((dz_p,self.dYGamma_p)),np.hstack((np.zeros((nZ,nz)),IZYhat)),IZYhat.dot(self.dY_p)
             ret = self.HFhat[p,S](z_i)
-            return ret + quadratic_dot(np.tensordot(DFi[:,e],hf,1),d[y,p],d[y,S]) + np.tensordot(DFi[:,v].dot(Ivy),
+            return (ret + quadratic_dot(np.tensordot(DFi[:,e],hf,1),d[y,p],d[y,S]) + np.tensordot(DFi[:,v].dot(Ivy),                        
             quadratic_dot(self.d2y[S,Z](z_i),dSprime_p,dZprime_S) + np.einsum('ilk,lj->ijk',self.d2y[S,S](z_i),dSprime_p)
-            +quadratic_dot(self.d2y[Z,Z](z_i),dZGamma_p,dZprime_S) + np.einsum('ilk,lj->ijk',self.d2y[Z,S](z_i),IZYhat.dot(self.dY_p))
+            +quadratic_dot(self.d2y[Z,Z](z_i),dZprime_p,dZprime_S) + np.einsum('ilk,lj->ijk',self.d2y[Z,S](z_i),dZprime_p)
             +np.einsum('ijk,jlk,km->ilm',self.dy[Y,S,Z](z_i)+self.d2y[Y,S,Z](z_i),temp_YGZ,dZprime_S)
             +np.einsum('ijk,kl->ijl',self.d2y[p,Z](z_i),dZprime_S)
-            ,1)
+            +np.tensordot(self.dy[Y](z_i),np.tensordot(temp_YGG,d[Y,S],1),1)
+            ,1) )
+            
         DF_ytild_Y_S = dict_fun(DF_ytild_Y_S)
         self.dytild['pG,Y_G'] = get_coefficient(lambda z_i: DF_ytild_Y_S(z_i)[:,:,nz:])
         self.d2y[p,z] = dict_fun(lambda z_i: np.tensordot(DF_ytild_pG_inv(z_i),DF_ytild_Y_S(z_i)[:,:,:nz],1))
@@ -941,18 +948,20 @@ class approximate(object):
         #now compute Y_pG
         DGi = lambda z_i : self.DG(z_i)[nG:]
         HGhat_pS = dict_fun(lambda z_i : HGhat(z_i,p,S))
+        HGhat_pz = lambda z_i : HGhat_pS(z_i)[:,:,:nz] + np.tensordot(DGi(z_i)[:,y],self.d2y[p,z](z_i),1)
         DG_pG_YpG = self.integrate(lambda z_i : np.tensordot(DGi(z_i)[:,y],self.dytild['pG,Y_pG'](z_i),1) + DGi(z_i)[:,Y])
         DG_pG_YZG = self.integrate(lambda z_i : np.tensordot(DGi(z_i)[:,y],self.dytild['pG,Y_ZG'](z_i),1))
         DG_pG_YGG = self.integrate(lambda z_i : np.tensordot(DGi(z_i)[:,y],self.dytild['pG,Y_GG'](z_i),1))
         DG_pG_YG = self.integrate(lambda z_i : np.tensordot(DGi(z_i)[:,y],self.dytild['pG,Y_G'](z_i),1) + HGhat_pS(z_i)[:,:,nz:]) 
         DG_pG_YGzpG = self.integrate(lambda z_i : np.tensordot(DGi(z_i)[:,y],self.dytild['pG,Y_Gz_pG'](z_i),1))
-
+        
         def HG_pz(z_i):
-            return (HGhat_pS(z_i)[:,:,:nz] + np.einsum('ijkl,jkm->ilm',DG_pG_YZG,self.d2Y[Z,z](z_i))
+            return (HGhat_pz(z_i) + np.einsum('ijkl,jkm->ilm',DG_pG_YZG,self.d2Y[Z,z](z_i))
             +np.tensordot(DG_pG_YGG,quadratic_dot(self.d2Y[z,z](z_i),Izy.dot(self.dy[p](z_i)),np.eye(nz)) + quadratic_dot(self.d2Y[Y,z](z_i),self.dYGamma_p,np.eye(nz)),1)
-            +np.tensordot(DG_pG_YG,self.dY(z_i),1) + np.tensordot(DG_pG_YGzpG,np.tensordot(self.dY(z_i).dot(Izy),self.d2y[p,z](z_i),1),1)            
+            +np.tensordot(DG_pG_YG,self.dY(z_i),1) + np.tensordot(DG_pG_YGzpG, np.tensordot(self.dY(z_i).dot(Izy),self.d2y[p,z](z_i),1) ,1)            
             )
         self.d2Y[p,z] = dict_fun(lambda z_i : np.tensordot(np.linalg.inv(DG_pG_YpG), -HG_pz(z_i),1) ) 
+        self.d2Y[z,p] = lambda z_i : self.d2Y[z,p](z_i).transpose(0,2,1)
         
         '''Finally derivative with respect to p and p'''
         #first integrate derivatives
@@ -966,7 +975,7 @@ class approximate(object):
         def DFhat_pp(z_i):
             dSprime_p_i,dZprime_p,d = dSprime_p(z_i),IZYhat.dot(self.dY_p),self.get_d(z_i)
             DFi,hf = DF(z_i)[n:],self.Hf(z_i)
-            yprime_ZG = np.einsum('ijk,jkl,km->iml',self.dy[Y,S,Z](z_i),Yhat_ZG,dZprime_p) 
+            yprime_ZG = np.einsum('ijk,jkl,km->iml',self.dy[Y,S,Z](z_i),Yhat_ZG,dZprime_p)  + np.einsum('ijk,jkl,km->iml',self.d2y[Y,S,Z](z_i),Yhat_ZG,IZYhat.dot(self.dYGamma_p))
             yprime_GG = np.tensordot(self.dy[Y](z_i),Yhat_GG1+ Yhat_GG1.transpose(0,2,1) + Yhat_GG2,1)
             yprime_pG = (np.tensordot(self.dytild['pG,Y_pG'](z_i),Yhat_pG,1) 
             + np.einsum('ijkl,jkm->ilm',self.dytild['pG,Y_ZG'](z_i),Yhat_ZG) + np.tensordot(self.dytild['pG,Y_G'](z_i),Yhat_G,1)
@@ -977,6 +986,7 @@ class approximate(object):
                 + quadratic_dot(self.d2y[S,S](z_i),dSprime_p_i,dSprime_p_i)
                 +quadratic_dot(self.d2y[Z,Z](z_i),dZprime_p,dZprime_p)
                 +transpose_sum(np.tensordot(self.d2y[p,z](z_i),Izy.dot(self.dy[p](z_i)),1))
+                +transpose_sum(np.tensordot(self.d2y[p,Z](z_i),dZprime_p,1))
                 #now for distribution terms
                 +transpose_sum(yprime_ZG)+yprime_GG+ transpose_sum(yprime_pG),1) )
         DFhat_pp = dict_fun(DFhat_pp)
@@ -995,15 +1005,15 @@ class approximate(object):
         DF_y_peps_inv = dict_fun(DF_y_peps_inv)
         def DFhat_peps(z_i):
             DFi = DF(z_i)[:-n]
-            dzprime_eps,dzprime_p = Izy.dot(self.dy[eps](z_i)), Izy.dot(self.dy[p](z_i))
+            dzprime_eps,dzprime_p,dZprime_p = Izy.dot(self.dy[eps](z_i)), Izy.dot(self.dy[p](z_i)),IZYhat.dot(self.dY_p)
+            dSprime_p = np.vstack((dzprime_p,self.dYGamma_p))
             return self.HFhat[p,eps](z_i) + np.tensordot(DFi[:,v].dot(Ivy),
-                    quadratic_dot(self.d2y[S,S](z_i)[:,:nz,:nz],dzprime_p,dzprime_eps) + np.tensordot(self.d2y[p,z](z_i),dzprime_eps,1)
+                    quadratic_dot(self.d2y[S,S](z_i)[:,:,:nz],dSprime_p,dzprime_eps) + np.tensordot(self.d2y[p,z](z_i),dzprime_eps,1)
+                    +quadratic_dot(self.d2y[Z,S](z_i)[:,:,:nz],dZprime_p,dzprime_eps)
                     ,1)
         DFhat_peps = dict_fun(DFhat_peps)
         self.d2y[p,eps] = dict_fun(lambda z_i: np.tensordot(DF_y_peps_inv(z_i), DFhat_peps(z_i),1))
         self.d2y[eps,p] = dict_fun(lambda z_i: self.d2y[p,eps](z_i))
-            
-            
         
         
     def compute_d2y(self):
