@@ -25,8 +25,8 @@ def get_stdev(rho):
     return [std_pers,std_iid]
     
 T = 202
-N = 200*16*15
-Para.k = 16*4*10
+N = 30000
+Para.k = 16*4*5
 
 #simulate persistence
 data = {}
