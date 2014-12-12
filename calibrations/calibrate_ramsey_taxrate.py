@@ -7,7 +7,7 @@ Created on Thu Apr 17 12:18:27 2014
 import numpy as np
 import pycppad as ad
 
-beta = 0.95
+beta = 0.96
 gamma = 2.
 sigma = 1.5
 #sigma_e = np.array([0.04,0.05,0.1,0.05])
@@ -169,7 +169,7 @@ def G(w):
     ret[9] = B_ - b_
     ret[10] = logm-0.
     
-    ret[11] = T+Gov#- (tau_k*pi + tau_l*W*w_e*l - Gov)
+    ret[11] = T + Gov
     ret[12] = K_ - k_
     ret[13] = foc_tau_k
     ret[14] = foc_R
@@ -299,7 +299,7 @@ def GSS(YSS,y_i,weights):
     c,l,k_,nl,m = np.exp(logc),np.exp(logl),np.exp(logk_),np.exp(lognl),np.exp(logm)
     mu = muhat*m
     K = np.exp(logK_)   
-    Uc = c**(-sigma)    
+    Uc = c**(-sigma)   
     
     return np.hstack(
     [weights.dot(K - k_), weights.dot(f - c - Gov - K), weights.dot(l*w_e - nl), weights.dot((pi-k_)*mu*Uc + rho3_/beta+pi*Zeta), weights.dot(W*w_e*l*Uc*mu + phi1 + W*w_e*l*Zeta),
@@ -329,7 +329,7 @@ def check_extreme(z_i):
     extreme = False
     if z_i[0] < -3. or z_i[0] > 6.:
         extreme = True
-    if z_i[1] > 5. or z_i[1] < -5.:
+    if z_i[1] > 8. or z_i[1] < -8.:
         extreme = True
     return extreme
     

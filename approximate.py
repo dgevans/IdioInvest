@@ -491,7 +491,7 @@ class approximate(object):
         
         d[v,S],d[v,eps],d[v,Z] = Ivy.dot(d[y,S]) + Ivy.dot(dy[Z](z_i)).dot(IZYhat).dot(d[Y,S]), Ivy.dot(dy[z](z_i)).dot(Izy).dot(dy[eps](z_i)), Ivy.dot(dy[Z](z_i)).dot(self.dZ_Z)
         d[v,Eps] = Ivy.dot(dy[z](z_i).dot(Izy).dot(dy[Eps](z_i)) + dy[Y](z_i).dot(self.dYGamma_Eps) + dy[Z](z_i).dot(IZYhat).dot(self.dY_Eps) )
-        d[v,p] =  Ivy.dot( dy[z](z_i).dot(Izy).dot(dy[p](z_i)) + dy[Y](z_i).dot(self.dYGamma_p) + dy[Z](z_i).dot(IZYhat).dot(self.dY_p) )      
+        d[v,p] =  Ivy.dot( dy[z](z_i).dot(Izy).dot(dy[p](z_i)) + dy[Y](z_i).dot(self.dYGamma_p) + dy[Z](z_i).dot(IZYhat).dot(self.dY_p) + d[y,p])      
         
         d[eps,S],d[eps,eps],d[eps,Z],d[eps,Eps],d[eps,p] = np.zeros((neps,nz+nY)),np.eye(neps),np.zeros((neps,nZ)),np.zeros((neps,nEps)),np.zeros((neps,n_p))
         
@@ -820,6 +820,25 @@ class approximate(object):
         self.d2y[Z,Eps] = dict_fun(lambda z_i: ytild_ZEps(z_i) + np.tensordot(ytild_YZEps(z_i),self.d2Y[Z,Eps],1))
         self.d2y[Eps,Z] = lambda z_i: self.d2y[Z,Eps](z_i).transpose(0,2,1)
         
+    def testpZ(self):
+        z_i = self.Gamma[0]
+        zprime_p,Zprime_p = Izy.dot(self.dy[p](z_i)),IZYhat.dot(self.dY_p)
+        Zprime_Z = self.dZ_Z
+        Sprime_p = np.vstack((zprime_p,self.dY(z_i).dot(zprime_p)))
+        zprime_pZ1 = np.tensordot(Izy,self.ytild_pZ(z_i),1)
+        zprime_pZ2 = np.tensordot(Izy,np.einsum('ijk,jlk->ilk',self.ytild_YpZ(z_i),self.d2Y[p,Z]),1)
+        Zprime_pZ = np.tensordot(IZYhat,self.d2Y[p,Z],1)
+        ret = []
+        ret.append(np.tensordot(self.dy[z](z_i),zprime_pZ1,1)[-1] + np.tensordot(self.dy[Y](z_i).dot(self.dY(z_i)),zprime_pZ1,1)[-1]
+        +quadratic_dot(self.d2y[S,Z](z_i),Sprime_p,Zprime_Z)[-1]+quadratic_dot(self.d2y[Z,Z](z_i),Zprime_p,Zprime_Z)[-1]
+        +np.einsum('ijk,jlk,lm,kp->imp',self.dy[Y,S,Z](z_i),self.d2Y[z,Z](z_i),zprime_p,Zprime_Z)[-1]
+        +np.einsum('ijk,kl->ijl',self.ytild_pZ(z_i),Zprime_Z)[-1]
+        )
+        ret.append(np.tensordot(self.dy[z](z_i),zprime_pZ2,1)[-1] + np.tensordot(self.dy[Y](z_i).dot(self.dY(z_i)),zprime_pZ2,1)[-1]
+        +np.tensordot(self.dy[Z](z_i),Zprime_pZ,1)[-1] + +np.einsum('ijk,jlk,km->ilm',self.ytild_YpZ(z_i),self.d2Y[p,Z],Zprime_Z)[-1]
+        )
+        return ret
+        
         
     def compute_d2p(self):
         '''
@@ -877,15 +896,17 @@ class approximate(object):
             
         ytild_pZ = dict_fun(lambda z_i: a_pZ(z_i) + np.einsum('ijk,jlk->ilk',c_pZ(z_i),temp1_pZ))
         ytild_YpZ = dict_fun(lambda z_i: b_pZ(z_i) + np.einsum('ijk,jlk->ilk',c_pZ(z_i),temp2_pZ))
+        self.ytild_pZ = ytild_pZ
+        self.ytild_YpZ = ytild_YpZ
         
         #sovling for YpZ
         DG_pZ = self.integrate(lambda z_i : HGhat(z_i,p,Z) + np.tensordot(self.DG(z_i)[nG:,y],ytild_pZ(z_i),1)  )
         DG_YpZ = self.integrate(lambda z_i : self.DG(z_i)[nG:,Y,np.newaxis] +np.tensordot(self.DG(z_i)[nG:,y],ytild_YpZ(z_i),1) )
         self.d2Y[p,Z] = np.empty((nY,n_p,nZ))
         for i in range(nZ):
-            self.d2Y[p,Z][:,:,i] = np.linalg.solve(DG_YpZ[:,:,i],-DG_pZ[:,:,i])
-        self.d2y[p,Z] = dict_fun(lambda z_i :ytild_pZ(z_i) + np.einsum('ijk,jlk->ilk',ytild_YpZ(z_i),self.d2Y[p,Z]) )
-        
+            temp = np.linalg.inv(DG_YpZ[:,:,i])
+            self.d2Y[p,Z][:,:,i] = np.tensordot(temp,-DG_pZ[:,:,i],1)
+        self.d2y[p,Z] = dict_fun(lambda z_i: ytild_pZ(z_i) + np.einsum('ijk,jlk->ilk',ytild_YpZ(z_i),self.d2Y[p,Z]) )
         
         '''Now w.r.t p and Gamma'''
         def DF_ytild_pG_inv(z_i):
