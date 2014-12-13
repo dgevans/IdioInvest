@@ -48,7 +48,7 @@ def run_rho_experiment():
         
         steadystate.calibrate(Para)
         ss = steadystate.steadystate(zip(np.zeros((1,4)),np.ones(1)))
-        Z[0] = ss.get_Y()[:2]
+        Z[0] = ss.get_Y()[:1]
         
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
