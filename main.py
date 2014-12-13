@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_ramsey_taxrate as Para
-import approximate
+import calibrations.calibrate_ramsey_taxrate_test as Para
+import approximate_noEps as approximate
 import numpy as np
 import simulate_MPI as simulate
 import utilities
