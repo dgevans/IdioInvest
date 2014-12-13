@@ -16,7 +16,7 @@ rank = comm.Get_rank()
 
 var_a =  0.10622#np.log(1+1/2.67)
 #Para.mu_a = -var_a/2
-corr_pers = 0.99
+corr_pers = 0.995
 
 def get_stdev(rho):
     frac = rho/corr_pers
@@ -25,8 +25,8 @@ def get_stdev(rho):
     return [std_pers,std_iid]
     
 T = 202
-N = 30000
-Para.k = 16*4*5
+N = 40000
+Para.k = 16*4*10
 
 #simulate persistence
 data = {}
@@ -35,7 +35,7 @@ state = np.random.get_state()
 def run_rho_experiment():
     if rank == 0:
         utilities.sendMessage('Starting Persistence')
-    for rho in np.linspace(0.,0.6,6):
+    for rho in np.linspace(0.,0.6,8):
         if rank ==0:
             utilities.sendMessage(str(rho))
             print rho
