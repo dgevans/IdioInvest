@@ -16,7 +16,7 @@ rank = comm.Get_rank()
 
 var_a =  0.10622#np.log(1+1/2.67)
 #Para.mu_a = -var_a/2
-corr_pers = 0.995
+corr_pers = 0.99
 
 def get_stdev(rho):
     frac = rho/corr_pers

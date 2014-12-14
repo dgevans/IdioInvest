@@ -36,7 +36,7 @@ nZ = 1 # number of aggregate states
 nEps = 1
 neps = len(sigma_e)
 
-phat = np.array([-0.005,-0.005,0.0005])
+phat = np.array([-0.01,-0.005,0.0005])
 
 temp = 0.
 
