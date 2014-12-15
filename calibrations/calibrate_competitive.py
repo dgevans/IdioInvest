@@ -7,12 +7,12 @@ Created on Thu Apr 17 12:18:27 2014
 import numpy as np
 import pycppad as ad
 
-beta = 0.95
+beta = 0.96
 gamma = 2.
 sigma = 1.5
 #sigma_e = np.array([0.04,0.05,0.1,0.05])
 sigma_e = np.array([0.02,0.0,0.,0.])
-sigma_E = 0.0
+sigma_E = 0.0*np.eye(1)
 mu_e = 0.
 mu_a = 0.
 chi = 1.
@@ -35,6 +35,7 @@ nY = 5 # Number of aggregates (alpha_1,alpha_2,tau,eta,lambda)
 nz = 3 # Number of individual states (m_{t-1},mu_{t-1})
 nv = 2 # number of forward looking terms (x_t,rho1_t)
 n_p = 3 #number of parameters
+nEps = 1
 nZ = 1 # number of aggregate states
 neps = len(sigma_e)
 
@@ -61,12 +62,12 @@ def F(w):
     psi_hat,psi = 0.,0.
     try:
         if (ad.value(b_) < 0):
-            psi_hat = (chi_psi-1.) * b_**2
-            psi = -psi_hat*b_
+            psi_hat = -2*0.001*(chi_psi-1.) * b_
+            psi = -0.001*(chi_psi-1.) * b_**2
     except:
         if (b_ < 0):
-            psi_hat = (chi_psi-1.) * b_**2
-            psi = -(chi_psi-1.) * b_**3 
+            psi_hat = -2*0.001*(chi_psi-1.) * b_
+            psi = -0.001*(chi_psi-1.) * b_**2
             
     Alpha_ = np.exp(logAlpha_)
     Ri_ = R_ + psi_hat * W
@@ -83,7 +84,7 @@ def F(w):
     ret[0] = x_ - Ex_ # x is independent of eps
     ret[1] = k_ - Ek_
     
-    ret[2] = x_*Uc/(beta*EUc) + Uc*((1-tau_k)*(pi-k_) - (Ri_-1) *k_)  +(1-tau_l)*W*w_e*l*Uc - Uc*(c-T) - x #x
+    ret[2] = x_*Uc/(beta*EUc) + Uc*W*(psi-psi_hat*b_) + Uc*((1-tau_k)*(pi-k_) - (Ri_-1) *k_)  +(1-tau_l)*W*w_e*l*Uc - Uc*(c-T) - x #x
     ret[3] = alpha - m*Uc #rho1
     ret[4] = (1-tau_l)*W*Uc*w_e + Ul #phi1
     ret[5] = r -  (1+(1-tau_k)*(fk-1)) #r
@@ -94,7 +95,7 @@ def F(w):
     ret[10] = nu_e - nu_l*(nu_e_ + eps_l_p) - (1-nu_l)*mu_e
     ret[11] = w_e - np.exp(temp*Eps+nu_e_+ eps_l_p + eps_l_t)
     ret[12] = b_ - (x_*m_/Alpha_ - k_)
-    ret[13] = labor_res - (l*w_e - nl - psi)
+    ret[13] = labor_res - (l*w_e - nl + psi)
     ret[14] = alpha_ - Alpha_
     
     ret[15] = Alpha_ - beta*Ri_*m_*EUc #rho2_
@@ -114,6 +115,7 @@ def G(w):
     
     c,l,k_ = np.exp(logc),np.exp(logl),np.exp(logk_)
     K_ = np.exp(logK_)
+    K = np.exp(logK)
     
     
     ret = np.empty(nY+nG,dtype=w.dtype)
@@ -122,9 +124,9 @@ def G(w):
     
     ret[2] = labor_res
     ret[3] = logm
-    ret[4] = T - (tau_k*(pi-k_) + tau_l*W*w_e*l -Gov )
+    ret[4] = T + Gov
     
-    ret[5] = b_ # no government debt
+    ret[5] = f -c -K-Gov # no government debt
     ret[6] = k_ - K_ #capital stock
     
     
@@ -209,8 +211,8 @@ def GSS(YSS,y_i,weights):
     K = np.exp(logK)      
     
     return np.hstack([
-    weights.dot(K - k_), weights.dot(labor_res),R_-1/beta,weights.dot(T - (tau_k*(pi-k_) + tau_l*W*w_e*l -Gov )),
-    weights.dot(b_)
+    weights.dot(K - k_), weights.dot(labor_res),R_-1/beta,T+Gov,
+    weights.dot(f-np.exp(logc)-K-Gov)
      ])
     
     
@@ -241,4 +243,10 @@ def check_SS(YSS):
     if YSS[1] < -1.5:
         return False
     return True
+
+def check(y_i):
+    if y_i[11] < -5.:
+        return False
+    return False
+        
     

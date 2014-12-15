@@ -64,13 +64,13 @@ def run_frict_experiment():
     if rank ==0:
         utilities.sendMessage('Starting Financial Frictions')
         
-    for rho in np.linspace(0.0,0.6,6):
+    for rho in np.linspace(0.0,0.6,8):
         if rank ==0:
-            #utilities.sendMessage(str(rho))
+            utilities.sendMessage(str(rho))
             print rho
         np.random.set_state(state)
         Para.sigma_e[:2] = get_stdev(rho)
-        Para.phat[2] = 0.001
+        Para.phat[2] = 0.12
         
         Gamma,Z,Y,Shocks,y = {},{},{},{},{}
         Gamma[0] = np.zeros((N,4))
@@ -203,5 +203,5 @@ def run_rho_experiment_ce():
     if rank == 0:
         utilities.sendMessage('Finished Persistence')
             
-run_rho_experiment()
+run_frict_experiment()
     

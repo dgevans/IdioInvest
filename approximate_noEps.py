@@ -1299,6 +1299,8 @@ class approximate(object):
         def compute_ye(x):
             z_i,zbar = x
             extreme = Para.check_extreme(z_i)
+            if Para.check(self.ss.get_y(z_i)):
+                zbar = z_i
             zhat = z_i-zbar
             r = np.random.randn(neps)
             for i in range(neps):
@@ -1323,6 +1325,7 @@ class approximate(object):
                                     +2*quadratic_dot(self.d2y[p,Z](zbar),phat,Zhat).flatten()
                                     +2*quadratic_dot(self.d2y[p,Eps](zbar),phat,E).flatten()
                                     +2*quadratic_dot(self.d2y[p,eps](zbar),phat,e).flatten()
+                                    +2*quadratic_dot(self.d2y[p,z](zbar),phat,zhat).flatten()
                                     +quadratic_dot(self.d2y[p,p](zbar),phat,phat).flatten()
                                     +quadratic_dot(self.d2y[Eps,Eps](zbar),E,E).flatten()
                                     +np.einsum('ijk,jk',self.d2y[sigma_E](zbar),cov_E).flatten()
@@ -1344,6 +1347,7 @@ class approximate(object):
                                     +2*np.einsum('ijk,jk,k',self.d2y[Y,S,Z](zbar),Y2hat_GZ,IZYhat.dot(Y1hat)).flatten()
                                     +2*quadratic_dot(self.d2y[p,Z](zbar),phat,Zhat).flatten()
                                     +2*quadratic_dot(self.d2y[p,Eps](zbar),phat,E).flatten()
+                                    +2*quadratic_dot(self.d2y[p,z](zbar),phat,zhat).flatten()
                                     +quadratic_dot(self.d2y[p,p](zbar),phat,phat).flatten()
                                     +quadratic_dot(self.d2y[Eps,Eps](zbar),E,E).flatten()
                                     +np.einsum('ijk,jk',self.d2y[sigma_E](zbar),cov_E).flatten()
