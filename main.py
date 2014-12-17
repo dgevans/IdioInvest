@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_ramsey_taxrate_test as Para
+import calibrations.calibrate_ramsey_taxrate_decom as Para
 import approximate_noEps as approximate
 import numpy as np
 import simulate_MPI as simulate
@@ -25,8 +25,8 @@ def get_stdev(rho):
     return [std_pers,std_iid]
     
 T = 202
-N = 40000
-Para.k = 16*4*10
+N = 20000
+Para.k = 16*4*7
 
 #simulate persistence
 data = {}
@@ -53,7 +53,7 @@ def run_rho_experiment():
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15.dat','wr')
+            fout = open('pers15_decom.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             
@@ -203,5 +203,5 @@ def run_rho_experiment_ce():
     if rank == 0:
         utilities.sendMessage('Finished Persistence')
             
-run_frict_experiment()
+run_rho_experiment()
     

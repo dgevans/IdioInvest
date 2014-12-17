@@ -74,6 +74,8 @@ def F(w):
     m_,m = np.exp(logm_),np.exp(logm)
     c,l,k_,nl = np.exp(logc),np.exp(logl),np.exp(logk_),np.exp(lognl)
     
+    
+    
     Uc = c**(-sigma)
     Ul = -chi*l**(gamma)
     A = np.exp((1-temp)*Eps*xi_l + nu_a_+eps_p+eps_t)
