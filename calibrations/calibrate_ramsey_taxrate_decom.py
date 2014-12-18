@@ -14,7 +14,7 @@ sigma = 1.5
 sigma_e = np.array([0.02,0.0,0.,0.])
 sigma_E = 0.*np.eye(1)
 mu_e = 0.
-mu_a = 0.
+mu_a_p = 0.
 chi = 1.
 delta = 0.06
 xi_l = 0.66*(1-0.21) #*.75
@@ -31,12 +31,12 @@ ne = 14 # number of Expectation Terms (E_t u_{c,t+1}, E_t u_{c,t+1}mu_{t+1} E_{t
 nY = 19 # Number of aggregates (alpha_1,alpha_2,tau,eta,lambda)
 nz = 4 # Number of individual states (m_{t-1},mu_{t-1})
 nv = 6 # number of forward looking terms (x_t,rho1_t)
-n_p = 3 #number of parameters
+n_p = 4 #number of parameters
 nZ = 1 # number of aggregate states
 nEps = 1
 neps = len(sigma_e)
 
-phat = np.array([-0.01,-0.005,0.0005])
+phat = np.array([-0.01,-0.005,0.0005,0.01])
 
 temp = 0.
 
@@ -51,7 +51,7 @@ def F(w):
     logXi,logAlpha_,logK_,R_,W,tau_l,tau_k,Eta,T,B_,dK_dtau_k,dL_dtau,dUc_dtau_l,TR_k,TW_k,TE_k,TR_l,TW_l,TE_l = w[ny+ne:ny+ne+nY] #Y
     logm_,muhat_,nu_a_,nu_e_= w[ny+ne+nY:ny+ne+nY+nz] #z
     x,rho2hat,rho3hat,lamb,logk,alpha = w[ny+ne+nY+nz:ny+ne+nY+nz+nv] #v
-    nu,nu_l,chi_psi = w[ny+ne+nY+nz+nv:ny+ne+nY+nz+nv+n_p] #p
+    nu,nu_l,chi_psi,hatmu_a_t = w[ny+ne+nY+nz+nv:ny+ne+nY+nz+nv+n_p] #p
     logXi_ = w[ny+ne+nY+nz+nv+n_p] #Z
     eps_p,eps_t,eps_l_p,eps_l_t = w[ny+ne+nY+nz+nv+n_p+nZ:ny+ne+nY+nz+nv+n_p+nZ+neps] #shock
     Eps = w[ny+ne+nY+nz+nv+n_p+nZ+neps] #aggregate shock
@@ -85,7 +85,9 @@ def F(w):
     Ucc = -sigma*c**(-sigma-1)
     Ul = -chi*l**(gamma)
     Ull = -chi*gamma*l**(gamma-1)
-    A = np.exp((1-temp)*Eps*xi_l + nu_a_+eps_p+eps_t)    
+    
+    mu_a_t = hatmu_a_t - 1.
+    A = np.exp((1-temp)*Eps*xi_l + nu_a +eps_t+mu_a_t)    
     
     
     fnn = A  * xi_l*(xi_l-1) * k_**(xi_k) * nl**(xi_l-2)
@@ -108,7 +110,7 @@ def F(w):
     ret[7] = r -  (fk-1)#r
     ret[8] = W - fn #phi2
     ret[9] = pi - ( A*(1-xi_l)*k_**(xi_k)*nl**(xi_l) + (1-delta)*k_   ) #pi
-    ret[10] = nu_a - (nu*(nu_a_+eps_p) + (1-nu)*mu_a ) #a
+    ret[10] = nu_a - (nu*nu_a_+eps_p + (1-nu)*mu_a_p ) #a
     ret[11] = f - A * k_**(xi_k) * nl**(xi_l) - (1-delta)*k_ #f  
     ret[12] = (Uc + Ucc*x_/(beta*EUc)*(mu-mu_) + mu*Ucc*( W*(psi-psi_hat*b_)+(1-tau_k)*(pi-k_)-(Ri_-1.)*k_  + (1-tau_l)*W*w_e*l-(c-T) -Uc/Ucc )
                 +m*Ucc*rho1 + Ri_ *Ucc/(beta*EUc) * rho2_  

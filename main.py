@@ -42,6 +42,8 @@ def run_rho_experiment():
         np.random.set_state(state)
         Para.sigma_e[:2] = get_stdev(rho)
         Para.phat[2] = 0.
+        Para.phat[3] = -Para.sigma_e[1]**2/2
+        Para.mu_a_p = -(var_a-Para.sigma_e[1]**2)/2
         
         Gamma,Z,Y,Shocks,y = {},{},{},{},{}
         Gamma[0] = np.zeros((N,4))
@@ -53,7 +55,7 @@ def run_rho_experiment():
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15_decom.dat','wr')
+            fout = open('pers15_decom2.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             
