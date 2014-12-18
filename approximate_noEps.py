@@ -1299,25 +1299,25 @@ class approximate(object):
             return quadratic_dot(self.d2Y[z,Z](zbar),zhat,np.eye(nZ)).reshape(nY,nZ)
         Y2hat_GZ =  parallel_sum(Y2_GZ_int,Gamma_dist)/len(self.Gamma)
         
-        def Y2_p_int(x):
-            z_i,zbar = x
-            zhat = z_i - zbar
-            return (quadratic_dot(self.d2Y[z,z](zbar),Izy.dot(self.dy[p](zbar)),zhat) + quadratic_dot(self.d2Y[Y,z](zbar),self.dYGamma_p,zhat)).reshape(nY,n_p)
-        
-        Y2hat_GGp = parallel_sum(Y2_p_int,Gamma_dist)/len(self.Gamma)
-        
-        def Y2_ypz_int(x):
-            z_i,zbar = x
-            zhat = z_i - zbar
-            return np.tensordot(self.dY(zbar).dot(Izy),np.einsum('ijk,k->ij',self.d2y[p,z](zbar),zhat),1)
-            
-        Y2hat_ypz = parallel_sum(Y2_ypz_int,Gamma_dist)/len(self.Gamma)
-        
-        def Y2_pz_int(x):
-            z_i,zbar = x
-            zhat = z_i - zbar
-            return np.einsum('ijk,k->ij',self.d2Y[p,z](zbar),zhat)
-        Y2hat_pz  = parallel_sum(Y2_pz_int,Gamma_dist)/len(self.Gamma)
+#        def Y2_p_int(x):
+#            z_i,zbar = x
+#            zhat = z_i - zbar
+#            return (quadratic_dot(self.d2Y[z,z](zbar),Izy.dot(self.dy[p](zbar)),zhat) + quadratic_dot(self.d2Y[Y,z](zbar),self.dYGamma_p,zhat)).reshape(nY,n_p)
+#        
+#        Y2hat_GGp = parallel_sum(Y2_p_int,Gamma_dist)/len(self.Gamma)
+#        
+#        def Y2_ypz_int(x):
+#            z_i,zbar = x
+#            zhat = z_i - zbar
+#            return np.tensordot(self.dY(zbar).dot(Izy),np.einsum('ijk,k->ij',self.d2y[p,z](zbar),zhat),1)
+#            
+#        Y2hat_ypz = parallel_sum(Y2_ypz_int,Gamma_dist)/len(self.Gamma)
+#        
+#        def Y2_pz_int(x):
+#            z_i,zbar = x
+#            zhat = z_i - zbar
+#            return np.einsum('ijk,k->ij',self.d2Y[p,z](zbar),zhat)
+#        Y2hat_pz  = parallel_sum(Y2_pz_int,Gamma_dist)/len(self.Gamma)
         
         def compute_ye(x):
             z_i,zbar = x
@@ -1331,9 +1331,10 @@ class approximate(object):
             e = r*sigma
             Shat = np.hstack([zhat,Y1hat])
             #'pG,Y_pG','pG,Y_ZG', 'pG,Y_GG', 'pG,Y_G', 'pG,Y_Gz_pG'
-            yhat_pG = (np.einsum('ij,jk,k->i',self.dytild['pG,Y_pG'](zbar),Y2hat_pz,phat) + np.einsum('ijkl,jk,l',self.dytild['pG,Y_ZG'](zbar),Y2hat_GZ,phat)
-                        +np.einsum('ij,jk,k',self.dytild['pG,Y_GG'](zbar),Y2hat_GGp,phat) + np.einsum('ijk,j,k',self.dytild['pG,Y_G'](zbar),phat,Y1hat)
-                        +np.einsum('ij,jk,k',self.dytild['pG,Y_Gz_pG'](zbar),Y2hat_ypz,phat) )
+#            yhat_pG = (np.einsum('ij,jk,k->i',self.dytild['pG,Y_pG'](zbar),Y2hat_pz,phat) + np.einsum('ijkl,jk,l',self.dytild['pG,Y_ZG'](zbar),Y2hat_GZ,phat)
+#                        +np.einsum('ij,jk,k',self.dytild['pG,Y_GG'](zbar),Y2hat_GGp,phat) + np.einsum('ijk,j,k',self.dytild['pG,Y_G'](zbar),phat,Y1hat)
+#                        +np.einsum('ij,jk,k',self.dytild['pG,Y_Gz_pG'](zbar),Y2hat_ypz,phat) )
+            yhat_pG = 0.
             if not extreme:
                 return np.hstack(( self.ss.get_y(zbar).flatten() + self.dy[eps](zbar).dot(e).flatten() + (self.dy[Eps](zbar).flatten())*E
                                     + self.dy[p](zbar).dot(phat).flatten()
@@ -1396,7 +1397,6 @@ class approximate(object):
                     + 2*quadratic_dot(self.d2Y[Z,Eps],Zhat,E).flatten()
                     + 2*quadratic_dot(self.d2Y[p,Z],phat,Zhat).flatten()
                     + 2*quadratic_dot(self.d2Y[p,Eps],phat,E).flatten()
-                    + 2*np.einsum('ij,j',Y2hat_pz,phat)
                     + quadratic_dot(self.d2Y[p,p],phat,phat).flatten()) )
                     
             Znew = Ynew[:nZ]
