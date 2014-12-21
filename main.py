@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_ramsey_taxrate_decom as Para
-import approximate_noEps as approximate
+import calibrations.calibrate_ramsey_taxrate_decom_aggshock as Para
+import approximate
 import numpy as np
 import simulate_MPI as simulate
 import utilities
@@ -20,7 +20,7 @@ corr_pers = 0.99
 
 def get_stdev(rho):
     frac = rho/corr_pers
-    std_pers = np.sqrt(var_a*frac*(1-corr_pers**2))
+    std_pers = np.sqrt(var_a*frac*(1-corr_pers**2))/(1-Para.beta)
     std_iid = np.sqrt(var_a*(1-frac))
     return [std_pers,std_iid]
     
@@ -42,8 +42,8 @@ def run_rho_experiment():
         np.random.set_state(state)
         Para.sigma_e[:2] = get_stdev(rho)
         Para.phat[2] = 0.
-        Para.phat[3] = -Para.sigma_e[1]**2/2
-        Para.mu_a_p = -(var_a-Para.sigma_e[1]**2)/2
+        #Para.phat[3] = -Para.sigma_e[1]**2/2
+        #Para.mu_a_p = -(var_a-Para.sigma_e[1]**2)/2
         
         Gamma,Z,Y,Shocks,y = {},{},{},{},{}
         Gamma[0] = np.zeros((N,4))
@@ -55,7 +55,7 @@ def run_rho_experiment():
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15_decom2.dat','wr')
+            fout = open('pers15_decom.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             

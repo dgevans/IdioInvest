@@ -1378,7 +1378,7 @@ class approximate(object):
                     + 2*quadratic_dot(self.d2Y[Z,Eps],Zhat,E).flatten()
                     + 2*quadratic_dot(self.d2Y[p,Z],phat,Zhat).flatten()
                     + 2*quadratic_dot(self.d2Y[p,Eps],phat,E).flatten()
-                    + 2*Y2hat_pz
+                    + 2*Y2hat_pz.dot(phat)
                     + quadratic_dot(self.d2Y[p,p],phat,phat).flatten()) )
                     
             Znew = Ynew[:nZ]
