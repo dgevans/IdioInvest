@@ -12,7 +12,7 @@ gamma = 2.
 sigma = 1.5
 #sigma_e = np.array([0.04,0.05,0.1,0.05])
 sigma_e = np.array([0.01/(1-beta),0.0,0.,0.])
-sigma_E = 0.*np.eye(1)
+sigma_E = 0.0*np.eye(1)
 mu_e = 0.
 mu_a_p = 0.
 chi = 1.
@@ -367,7 +367,7 @@ def check_extreme(z_i):
     return extreme
     
 def check_SS(YSS):
-    if YSS[2] < -1.5:
+    if YSS[3] < -1.5:
         return False
     return True
     

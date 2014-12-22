@@ -1445,8 +1445,61 @@ class approximate(object):
         else:
             parallel_map(compute_ye,self.Gamma)
             return None
-
+    
     def iterate_ConditionalMean(self,Zbar,quadratic = True):
+        '''
+        Iterates the distribution by randomly sampling
+        '''
+        if not self.simple:
+            return self.iterate_ConditionalMean_complex(Zbar,quadratic)
+        else:
+            return self.iterate_ConditionalMean_simple(Zbar)
+            
+    def iterate_ConditionalMean_simple(self,Zbar):
+        Zhat = self.dZhat_Z.dot(Zbar-self.ss.get_Y()[:nZ])
+        cov_E = sigma_E.dot(sigma_E.T)
+        phat = Para.phat
+        
+        def compute_ye(x):
+            zbar = x
+            r = np.random.randn(neps)
+            for i in range(neps):
+                r[i] = min(3.,max(-3.,r[i]))
+            e = r*sigma
+            return np.hstack(( self.ss.get_y(zbar).flatten() + self.dy[eps](zbar).dot(e).flatten()
+                                + self.dy[p](zbar).dot(phat).flatten()
+                                + self.dy[Z](zbar).dot(Zhat).flatten()
+                                + 0.5*(quadratic_dot(self.d2y[eps,eps](zbar),e,e).flatten() + self.d2y[sigma](zbar).dot(sigma**2).flatten()
+                                +2*quadratic_dot(self.d2y[Z,eps](zbar),Zhat,e).flatten()
+                                +quadratic_dot(self.d2y[Z,Z](zbar),Zhat,Zhat).flatten()
+                                +2*quadratic_dot(self.d2y[p,Z](zbar),phat,Zhat).flatten()
+                                +quadratic_dot(self.d2y[p,p](zbar),phat,phat).flatten()
+                                +np.einsum('ijk,jk',self.d2y[Eps,Eps](zbar),cov_E).flatten()
+                                +np.einsum('ijk,jk',self.d2y[sigma_E](zbar),cov_E).flatten()
+                                ).flatten()
+                               ,e))
+                               
+        if rank == 0:    
+            ye = np.vstack(parallel_map(compute_ye,self.Gamma))
+            y,epsilon = ye[:,:-neps],ye[:,-neps:]
+            Gamma = y.dot(Izy.T)
+            Ynew = (self.ss.get_Y().flatten()
+                    + self.dY_p.dot(phat).flatten()
+                    + self.dY_Z.dot(Zhat).flatten()
+                    + 0.5*(self.d2Y[sigma].dot(sigma**2).flatten()
+                    + np.einsum('ijk,jk',self.d2Y[Eps,Eps],cov_E).flatten()
+                    + np.einsum('ijk,jk',self.d2Y[sigma_E],cov_E).flatten()
+                    + quadratic_dot(self.d2Y[Z,Z],Zhat,Zhat).flatten()
+                    + 2*quadratic_dot(self.d2Y[p,Z],phat,Zhat).flatten()
+                    + quadratic_dot(self.d2Y[p,p],phat,phat).flatten()))
+                    
+            Znew = Ynew[:nZ]
+            return Gamma,Znew,Ynew,epsilon,y
+        else:
+            parallel_map(compute_ye,self.Gamma)
+            return None
+
+    def iterate_ConditionalMean_complex(self,Zbar,quadratic = True):
         '''
         Iterates the distribution by randomly sampling
         '''
