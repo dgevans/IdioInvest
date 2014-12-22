@@ -25,8 +25,8 @@ def get_stdev(rho):
     return [std_pers,std_iid]
     
 T = 202
-N = 208*16*3
-Para.k = 16*4*4
+N = 151*64
+Para.k = 64*2
 
 #simulate persistence
 data = {}
@@ -42,6 +42,7 @@ def run_rho_experiment():
         np.random.set_state(state)
         Para.sigma_e[:2] = get_stdev(rho)
         Para.phat[2] = 0.
+        Para.sigma_E = 0.025 * np.eye(1)
         #Para.phat[3] = -Para.sigma_e[1]**2/2
         #Para.mu_a_p = -(var_a-Para.sigma_e[1]**2)/2
         
@@ -50,7 +51,7 @@ def run_rho_experiment():
         
         steadystate.calibrate(Para)
         ss = steadystate.steadystate(zip(np.zeros((1,4)),np.ones(1)))
-        Z[0] = ss.get_Y()[:1]
+        Z[0] = ss.get_Y()[:2]
         
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
