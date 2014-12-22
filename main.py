@@ -25,19 +25,19 @@ def get_stdev(rho):
     return [std_pers,std_iid]
     
 T = 202
-N = 151*64
-Para.k = 64*2
+N = 151*64*2
+Para.k = 64*2*2
 
 #simulate persistence
 data = {}
 state = np.random.get_state()
     
 def run_rho_experiment():
-    if rank == 0:
-        utilities.sendMessage('Starting Persistence')
+    #if rank == 0:
+    #    utilities.sendMessage('Starting Persistence')
     for rho in np.linspace(0.,0.6,8):
         if rank ==0:
-            utilities.sendMessage(str(rho))
+            #utilities.sendMessage(str(rho))
             print rho
         np.random.set_state(state)
         Para.sigma_e[:2] = get_stdev(rho)
