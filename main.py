@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_ramsey_decom_aggshock as Para
+import calibrations.calibrate_ramsey_taxrate_decom_aggshock as Para
 import approximate
 import numpy as np
 import simulate_MPI as simulate
