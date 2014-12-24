@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_ramsey_wealthtax_decom_aggshock as Para
+import calibrations.calibrate_ramsey_decom_aggshock as Para
 import approximate
 import numpy as np
 import simulate_MPI as simulate
@@ -35,7 +35,7 @@ state = np.random.get_state()
 def run_rho_experiment():
     if rank == 0:
         utilities.sendMessage('Starting Persistence')
-    for rho in np.linspace(0.,0.6,8):
+    for rho in np.linspace(0.,0.6,8)[4:]:
         if rank ==0:
             utilities.sendMessage(str(rho))
             print rho
@@ -56,7 +56,7 @@ def run_rho_experiment():
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15_decom_wealth.dat','wr')
+            fout = open('pers15_decom_test.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             

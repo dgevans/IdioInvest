@@ -48,11 +48,11 @@ def F(w):
     '''
     logm,muhat,nu_a,nu_e,logc,logl,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_tau_k,rho2_,rho3_,labor_res,res,foc_W,r_k,dk_dtau_k,tR_khat,tW_khat,tE_khat,tR_k,tW_k,tE_k,dl_dtau,tR_l,tW_l,tE_l,xi,x_,rho2hat_,rho3hat_,logk_,alpha_ = w[:ny] #y
     EUc,EUc_r,Ex_,Ek_,EUc_mu,Erho2_,Erho3_,Efoc_k,Efoc_tau_k,EUc_r_k,Er,EtR_khat,EtW_khat,EtE_khat,EXi,EXi_r= w[ny:ny+ne] #e
-    logXi,tau_k,logAlpha_,logK_,R_,W,tau_l,Eta,T,B_,dK_dtau_k,dL_dtau,dUc_dtau_l,TR_k,TW_k,TE_k,TR_l,TW_l,TE_l = w[ny+ne:ny+ne+nY] #Y
+    logXi,log_wedge,logAlpha_,logK_,R_,W,tau_l,Eta,T,B_,dK_dtau_k,dL_dtau,dUc_dtau_l,TR_k,TW_k,TE_k,TR_l,TW_l,TE_l = w[ny+ne:ny+ne+nY] #Y
     logm_,muhat_,nu_a_,nu_e_= w[ny+ne+nY:ny+ne+nY+nz] #z
     x,rho2hat,rho3hat,logk,alpha = w[ny+ne+nY+nz:ny+ne+nY+nz+nv] #v
     nu,nu_l,hatmu_a_t = w[ny+ne+nY+nz+nv:ny+ne+nY+nz+nv+n_p] #p
-    logXi_,tau_k_ = w[ny+ne+nY+nz+nv+n_p:ny+ne+nY+nz+nv+n_p+nZ] #Z
+    logXi_,log_wedge_ = w[ny+ne+nY+nz+nv+n_p:ny+ne+nY+nz+nv+n_p+nZ] #Z
     eps_p,eps_t,eps_l_p,eps_l_t = w[ny+ne+nY+nz+nv+n_p+nZ:ny+ne+nY+nz+nv+n_p+nZ+neps] #shock
     Eps = w[ny+ne+nY+nz+nv+n_p+nZ+neps] #aggregate shock
     
@@ -61,6 +61,8 @@ def F(w):
     #else:
     #    shock = 1.
     eps_p = (1-beta)*eps_p
+    
+    tau_k_ = 1- np.exp(log_wedge) 
             
     Alpha_ = np.exp(logAlpha_)
     Xi_,Xi = np.exp(logXi_),np.exp(logXi)
@@ -147,9 +149,9 @@ def G(w):
     Aggregate equations
     '''
     logm,muhat,nu_a,nu_e,logc,logl,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_tau_k,rho2_,rho3_,labor_res,res,foc_W,r_k,dk_dtau_k,tR_khat,tW_khat,tE_khat,tR_k,tW_k,tE_k,dl_dtau,tR_l,tW_l,tE_l,xi,x_,rho2hat_,rho3hat_,logk_,alpha_ = w[:ny] #y
-    logXi,tau_k,logAlpha_,logK_,R_,W,tau_l,Eta,T,B_,dK_dtau_k,dL_dtau,dUc_dtau_l,TR_k,TW_k,TE_k,TR_l,TW_l,TE_l = w[ny+ne:ny+ne+nY] #Y
+    logXi,log_wedge,logAlpha_,logK_,R_,W,tau_l,Eta,T,B_,dK_dtau_k,dL_dtau,dUc_dtau_l,TR_k,TW_k,TE_k,TR_l,TW_l,TE_l = w[ny+ne:ny+ne+nY] #Y
     logm_,muhat_,nu_a_,nu_e_= w[ny+ne+nY:ny+ne+nY+nz] #z
-    logXi_,tau_k_ = w[ny+ne+nY+nz+nv+n_p:ny+ne+nY+nz+nv+n_p+nZ] #Z
+    logXi_,log_wedge_ = w[ny+ne+nY+nz+nv+n_p:ny+ne+nY+nz+nv+n_p+nZ] #Z
     Eps = w[ny+ne+nY+nz+nv+n_p+nZ+neps] #aggregate shock
     
     c,l,k_,nl,m,m_ = np.exp(logc),np.exp(logl),np.exp(logk_),np.exp(lognl),np.exp(logm),np.exp(logm_)
@@ -227,12 +229,12 @@ def Finv(YSS,z):
     Given steady state YSS solves for y_i
     '''
     logm,muhat,nu_a,nu_e = z
-    logXi,tau_k,logAlpha,logK_,R_,W,tau_l,Eta,T,B_,dK_dtau_k,dL_dtau,dUc_dtau_l,TR_k,TW_k,TE_k,TR_l,TW_l,TE_l = YSS
+    logXi,log_wedge,logAlpha,logK_,R_,W,tau_l,Eta,T,B_,dK_dtau_k,dL_dtau,dUc_dtau_l,TR_k,TW_k,TE_k,TR_l,TW_l,TE_l = YSS
     
     Xi = np.exp(logXi)
     Alpha_ = np.exp(logAlpha)
         
-    
+    tau_k = 1- np.exp(log_wedge)
     m = np.exp(logm)
     w_e = np.exp(nu_e)
     mu = muhat*m
@@ -323,7 +325,7 @@ def GSS(YSS,y_i,weights):
     Aggregate conditions for the steady state
     '''
     logm,muhat,nu_a,nu_e,logc,logl,lognl,w_e,r,pi,f,rho1,phi1,phi2,foc_k,foc_R,foc_tau_k,rho2_,rho3_,labor_res,res,foc_W,r_k,dk_dtau_k,tR_khat,tW_khat,tE_khat,tR_k,tW_k,tE_k,dl_dtau,tR_l,tW_l,tE_l,xi,x_,rho2hat_,rho3hat_,logk_,alpha  = y_i
-    logXi,tau_k,logAlpha,logK_,R_,W,tau_l,Eta,T,B_,dK_dtau_k,dL_dtau,dUc_dtau_l,TR_k,TW_k,TE_k,TR_l,TW_l,TE_l = YSS
+    logXi,log_wedge,logAlpha,logK_,R_,W,tau_l,Eta,T,B_,dK_dtau_k,dL_dtau,dUc_dtau_l,TR_k,TW_k,TE_k,TR_l,TW_l,TE_l = YSS
   
     Xi = np.exp(logXi)
     Alpha_ = np.exp(logAlpha)
