@@ -42,7 +42,7 @@ def run_rho_experiment():
         np.random.set_state(state)
         Para.sigma_e[:2] = get_stdev(rho)
         Para.phat[2] = 0.
-        Para.sigma_E = 0.0 * np.eye(1)
+        Para.sigma_E = 0.02 * np.eye(1)
         #Para.phat[3] = -Para.sigma_e[1]**2/2
         #Para.mu_a_p = -(var_a-Para.sigma_e[1]**2)/2
         
