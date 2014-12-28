@@ -56,7 +56,7 @@ def run_rho_experiment():
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15_new.dat','wr')
+            fout = open('pers15_new_decom.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             
@@ -87,7 +87,7 @@ def run_rho_experiment_agg():
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15_new_a.dat','wr')
+            fout = open('pers15_new_decom_agg.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             
