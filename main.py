@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_PR_with_n2 as Para
+import calibrations.calibrate_PR_with_n_decom as Para
 import approximate
 import numpy as np
 import simulate_MPI as simulate
