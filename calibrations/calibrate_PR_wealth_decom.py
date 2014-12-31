@@ -91,7 +91,7 @@ def F(w):
     #ret[9] = (Uc + Ucc*mu*(x - Uc/Ucc) - x_*Ucc*mu_/(beta*EUc) 
     #            - rho1*m*Ucc - rho2_*m_*R_*Ucc - rho3_*m_*r*Ucc - Xi )
     ret[9] = (Uc + x_*Ucc/(beta*EUc) *(mu-mu_) +Ucc*mu*((1-tau_k_)*((1-xi_l)*f +(1-delta_i)*k_) - (R_) *k_ 
-                +W-c-Uc/Ucc) - rho1*m*Ucc - rho2_*m_*R_*Ucc - rho3_*m_*r*Ucc - Xi  + Ucc*(1-tau_l)*phi2/Uc )
+                +W-(c-T)-Uc/Ucc) - rho1*m*Ucc - rho2_*m_*R_*Ucc - rho3_*m_*r*Ucc - Xi  + Ucc*(1-tau_l)*phi2/Uc )
                 
     ret[10] = (Uc*mu*(1-tau_k_)*(1-xi_l)*fl  - rho3_*m_*(1-tau_k_)*flk*Uc  - phi*fll - Eta + fl*Xi)
     ret[11] = foc_k - ( mu*Uc*( (1-tau_k_)*((1-xi_l)*fk+(1-delta_i)) -R_ ) - rho3_*m_*(1-tau_k_)*fkk*Uc
@@ -113,7 +113,7 @@ def F(w):
     ret[26] = dnl_dtau - ( -Un/((1-tau_l)*Unn) )
     ret[27] = tR_l  + ((1-tau_l)*W*mu*Uc*dnl_dtau -W*nl*Uc*mu)/dUc_dtau_l#+ (mu*Uc*w_e*W*(dl_dtau*(1-tau_l) - l)/dUc_dtau_l)
     ret[28] = tE_l - ((dnl_dtau*W*(Uc-Xi))/dUc_dtau_l)
-    ret[29] = A - np.exp(nu_a + eps_t+Eps)
+    ret[29] = A - np.exp((1-Eps)*nu_a + eps_t)
     
     # xi,dk_dtau_k_, tR_khat,tW_khat, dnl_tau, tR_l, tE_l
     
@@ -256,7 +256,7 @@ def Finv(YSS,z):
     phi = (Uc*mu*(1-tau_k)*(1-xi_l)*fl - rho3*m*(1-tau_k)*flk*Uc - Eta + fl *Xi)/fll
     
     rho1 = (Uc +Ucc*mu*((1-tau_k)*((1-xi_l)*f+(1-delta_i)*k_) - R_ *k_ 
-                +W-c-Uc/Ucc) - Xi + Ucc*(1-tau_l)*phi2/Uc)/(m*Ucc*(1-1/beta))
+                +W-c+T-Uc/Ucc) - Xi + Ucc*(1-tau_l)*phi2/Uc)/(m*Ucc*(1-1/beta))
     
     rho2 = - rho1 - rho3
     

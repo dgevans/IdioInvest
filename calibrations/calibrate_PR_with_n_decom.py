@@ -256,7 +256,7 @@ def Finv(YSS,z):
     phi = (Uc*mu*(1-tau_k)*(1-xi_l)*fl - rho3*m*(1-tau_k)*flk*Uc - Eta + fl *Xi)/fll
     
     rho1 = (Uc +Ucc*mu*((1-tau_k)*((1-xi_l)*f-delta_i*k_) + k_ - R_ *k_ 
-                +W-c-Uc/Ucc) - Xi + Ucc*(1-tau_l)*phi2/Uc)/(m*Ucc*(1-1/beta))
+                +W-c+T-Uc/Ucc) - Xi + Ucc*(1-tau_l)*phi2/Uc)/(m*Ucc*(1-1/beta))
     
     rho2 = - rho1 - rho3
     

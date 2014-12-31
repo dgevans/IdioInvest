@@ -25,8 +25,8 @@ def get_stdev(rho):
     return [std_pers,std_iid]
     
 T = 202
-N = 151*64*2
-Para.k = 64*3*2
+N = 151*64
+Para.k = 64*3
 
 #simulate persistence
 data = {}
@@ -237,6 +237,6 @@ def run_rho_experiment_ce():
     if rank == 0:
         utilities.sendMessage('Finished Persistence')
             
-#run_rho_experiment()
+run_rho_experiment()
 run_rho_experiment_agg()
     
