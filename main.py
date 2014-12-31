@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_PR_wealth_decom as Para
+import calibrations.calibrate_PR_with_n_decom as Para
 import approximate
 import numpy as np
 import simulate_MPI as simulate
@@ -87,7 +87,7 @@ def run_rho_experiment_agg():
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15_new_wealth_decom_agg.dat','wr')
+            fout = open('pers15_new_decom_agg.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             
@@ -237,6 +237,6 @@ def run_rho_experiment_ce():
     if rank == 0:
         utilities.sendMessage('Finished Persistence')
             
-run_rho_experiment()
+#run_rho_experiment()
 run_rho_experiment_agg()
     

@@ -91,7 +91,7 @@ def F(w):
     #ret[9] = (Uc + Ucc*mu*(x - Uc/Ucc) - x_*Ucc*mu_/(beta*EUc) 
     #            - rho1*m*Ucc - rho2_*m_*R_*Ucc - rho3_*m_*r*Ucc - Xi )
     ret[9] = (Uc + x_*Ucc/(beta*EUc) *(mu-mu_) +Ucc*mu*((1-tau_k_)*((1-xi_l)*f-delta_i*k_) - (R_-1.) *k_ 
-                +W-c-Uc/Ucc) - rho1*m*Ucc - rho2_*m_*R_*Ucc - rho3_*m_*r*Ucc - Xi  + Ucc*(1-tau_l)*phi2/Uc )
+                +W-c+T-Uc/Ucc) - rho1*m*Ucc - rho2_*m_*R_*Ucc - rho3_*m_*r*Ucc - Xi  + Ucc*(1-tau_l)*phi2/Uc )
                 
     ret[10] = (Uc*mu*(1-tau_k_)*(1-xi_l)*fl  - rho3_*m_*(1-tau_k_)*flk*Uc  - phi*fll - Eta + fl*Xi)
     ret[11] = foc_k - ( mu*Uc*( (1-tau_k_)*((1-xi_l)*fk-delta_i) -(R_-1)) - rho3_*m_*(1-tau_k_)*fkk*Uc
