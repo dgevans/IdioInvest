@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_PR_with_n_decom as Para
+import calibrations.calibrate_PR_wealth_decom as Para
 import approximate
 import numpy as np
 import simulate_MPI as simulate
@@ -87,7 +87,7 @@ def run_rho_experiment_agg():
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15_new_decom_agg.dat','wr')
+            fout = open('pers15_new_wealth_decom_agg.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             
@@ -153,17 +153,16 @@ def run_friction_experiment():
 def run_long_simulation():
     if rank == 0:
         utilities.sendMessage('Starting long simulation')
-    N = 50000
-    T = 300
-    Para.k = 5*16*12
+    import calibrations.calibrate_PR_with_n_decom as Para
+    Para.k = 64*3
+    T = 500
     Para.sigma_e[:2] = get_stdev(0.6)
-    Para.phat[2] = 0.
-    Para.sigma_E = 0.
+    Para.sigma_E = 0.025*np.eye(1)
     Gamma,Z,Y,Shocks,y = {},{},{},{},{}
-    Gamma[0] = np.zeros((N,4))
+    Gamma[0] = np.zeros((N,3))
     
     steadystate.calibrate(Para)
-    ss = steadystate.steadystate(zip(np.zeros((1,4)),np.ones(1)))
+    ss = steadystate.steadystate(zip(np.zeros((1,3)),np.ones(1)))
     Z[0] = ss.get_Y()[:2]
     
     simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
@@ -239,4 +238,4 @@ def run_rho_experiment_ce():
             
 run_rho_experiment()
 run_rho_experiment_agg()
-    
+run_long_simulation()

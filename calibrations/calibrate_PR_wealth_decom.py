@@ -113,7 +113,7 @@ def F(w):
     ret[26] = dnl_dtau - ( -Un/((1-tau_l)*Unn) )
     ret[27] = tR_l  + ((1-tau_l)*W*mu*Uc*dnl_dtau -W*nl*Uc*mu)/dUc_dtau_l#+ (mu*Uc*w_e*W*(dl_dtau*(1-tau_l) - l)/dUc_dtau_l)
     ret[28] = tE_l - ((dnl_dtau*W*(Uc-Xi))/dUc_dtau_l)
-    ret[29] = A - np.exp((1-Eps)*nu_a + eps_t)
+    ret[29] = A - np.exp(nu_a + eps_t+Eps)
     
     # xi,dk_dtau_k_, tR_khat,tW_khat, dnl_tau, tR_l, tE_l
     
