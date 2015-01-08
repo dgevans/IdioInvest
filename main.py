@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_PR_wealth_decom as Para
+import calibrations.calibrate_PR_no_deduct_decom as Para
 import approximate
 import numpy as np
 import simulate_MPI as simulate
@@ -25,8 +25,8 @@ def get_stdev(rho):
     return [std_pers,std_iid]
     
 T = 202
-N = 151*64
-Para.k = 64*3
+N = 151*64*2
+Para.k = 64*4
 
 #simulate persistence
 data = {}
@@ -56,7 +56,7 @@ def run_rho_experiment():
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15_new_wealth_decom.dat','wr')
+            fout = open('pers15_no_deduct_decom.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             
@@ -87,7 +87,7 @@ def run_rho_experiment_agg():
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15_new_wealth_decom_agg.dat','wr')
+            fout = open('pers15_no_deduct_decom_tfp.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             
@@ -157,7 +157,7 @@ def run_long_simulation():
     Para.k = 64*3
     T = 500
     Para.sigma_e[:2] = get_stdev(0.6)
-    Para.sigma_E = 0.025*np.eye(1)
+    Para.sigma_E = 0.0*np.eye(1)
     Gamma,Z,Y,Shocks,y = {},{},{},{},{}
     Gamma[0] = np.zeros((N,3))
     

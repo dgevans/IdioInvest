@@ -369,55 +369,91 @@ class approximate(object):
         '''
         Linearize with respect to aggregate shock.
         '''
+#        dy = {}
+#        
+#        def Fhat_y(z_i):
+#            DFi = self.DF(z_i)[:-n,:]
+#            return DFi[:,y] + DFi[:,v].dot(Ivy).dot(self.dy[z](z_i)).dot(Izy)
+#            
+#        Fhat_inv = dict_fun(lambda z_i: -np.linalg.inv(Fhat_y(z_i))) 
+#        
+#        def dy_dYprime(z_i):
+#            DFi = self.DF(z_i)[:-n,:]
+#            return Fhat_inv(z_i).dot(DFi[:,v]).dot(Ivy).dot(self.dy[Y](z_i))
+#            
+#        dy_dYprime = dict_fun(dy_dYprime)
+#        
+#        temp = np.linalg.inv( np.eye(nY) - self.integrate(lambda z_i: self.dY(z_i).dot(Izy).dot(dy_dYprime(z_i))) )
+#        
+#        self.temp_matrix_Eps = np.eye(nY) - self.integrate(lambda z_i: self.dY(z_i).dot(Izy).dot(dy_dYprime(z_i)))
+#        
+#        dYprime = {}
+#        dYprime[Eps] = temp.dot(
+#        self.integrate(lambda z_i : self.dY(z_i).dot(Izy).dot(Fhat_inv(z_i)).dot(self.DF(z_i)[:-n,Eps]))        
+#        )
+#        dYprime[Y] = temp.dot(
+#        self.integrate(lambda z_i : self.dY(z_i).dot(Izy).dot(Fhat_inv(z_i)).dot(self.DF(z_i)[:-n,Y] + self.DF(z_i)[:-n,v].dot(Ivy).dot(self.dy[Z](z_i)).dot(IZYhat)))        
+#        )
+#        
+#        
+#        dy[Eps] = dict_fun(
+#        lambda z_i : Fhat_inv(z_i).dot(self.DF(z_i)[:-n,Eps]) + dy_dYprime(z_i).dot(dYprime[Eps])        
+#        )
+#        
+#        dy[Y] = dict_fun(
+#        lambda z_i : Fhat_inv(z_i).dot(self.DF(z_i)[:-n,Y] + self.DF(z_i)[:-n,v].dot(Ivy).dot(self.dy[Z](z_i)).dot(IZYhat)) + dy_dYprime(z_i).dot(dYprime[Y])         
+#        )
+#        
+#        #Now do derivatives w.r.t G
+#        DGi = dict_fun(lambda z_i : self.DG(z_i)[:-nG,:])
+#        
+#        DGhat_Y = self.integrate(
+#        lambda z_i : DGi(z_i)[:,Y] + DGi(z_i)[:,y].dot(dy[Y](z_i))        
+#        )
+#        
+#        self.dY_Eps = -np.linalg.solve(DGhat_Y,self.integrate(
+#        lambda z_i : DGi(z_i)[:,Eps] + DGi(z_i)[:,y].dot(dy[Eps](z_i))          
+#        ) )
+#        
+#        self.test = dy[Eps]
+#        self.dy[Eps] = dict_fun(
+#        lambda z_i : dy[Eps](z_i) + dy[Y](z_i).dot(self.dY_Eps)
+#        )
         dy = {}
+        DF = self.DF
         
-        def Fhat_y(z_i):
-            DFi = self.DF(z_i)[:-n,:]
-            return DFi[:,y] + DFi[:,v].dot(Ivy).dot(self.dy[z](z_i)).dot(Izy)
+        def T(f):
+            return self.integrate(lambda z_i: np.tensordot(self.dY(z_i).dot(Izy),f(z_i),1))
+         
+        def DF_ytild_Eps_inv(z_i):
+            DFi = DF(z_i)[:-n]
+            return -np.linalg.inv(DFi[:,y] + DFi[:,v].dot(Ivy).dot(self.dy[z](z_i)).dot(Izy))
             
-        Fhat_inv = dict_fun(lambda z_i: -np.linalg.inv(Fhat_y(z_i))) 
+        c_Eps = dict_fun( lambda z_i: DF_ytild_Eps_inv(z_i).dot(DF(z_i)[:-n,v]).dot(Ivy).dot(self.dy[Y](z_i)) ) 
+        C_Eps = T(c_Eps)
+        self.temp_matrix_Eps = np.eye(nY) - C_Eps
+        temp_Eps = np.linalg.inv(np.eye(nY)-C_Eps)
         
-        def dy_dYprime(z_i):
-            DFi = self.DF(z_i)[:-n,:]
-            return Fhat_inv(z_i).dot(DFi[:,v]).dot(Ivy).dot(self.dy[Y](z_i))
+        def get_coefficient(DF_Ytild):
+            #given a function DF_Ytild compute associated coefficient
+            b_i = dict_fun(lambda z_i: np.tensordot(DF_ytild_Eps_inv(z_i),DF_Ytild(z_i),1))
+            temp = np.tensordot(temp_Eps, T(b_i),1)
+            return dict_fun(
+            lambda z_i: b_i(z_i) +np.tensordot(c_Eps(z_i),temp,1)            
+            )
             
-        dy_dYprime = dict_fun(dy_dYprime)
-        
-        temp = np.linalg.inv( np.eye(nY) - self.integrate(lambda z_i: self.dY(z_i).dot(Izy).dot(dy_dYprime(z_i))) )
-        
-        self.temp_matrix_Eps = np.eye(nY) - self.integrate(lambda z_i: self.dY(z_i).dot(Izy).dot(dy_dYprime(z_i)))
-        
-        dYprime = {}
-        dYprime[Eps] = temp.dot(
-        self.integrate(lambda z_i : self.dY(z_i).dot(Izy).dot(Fhat_inv(z_i)).dot(self.DF(z_i)[:-n,Eps]))        
-        )
-        dYprime[Y] = temp.dot(
-        self.integrate(lambda z_i : self.dY(z_i).dot(Izy).dot(Fhat_inv(z_i)).dot(self.DF(z_i)[:-n,Y] + self.DF(z_i)[:-n,v].dot(Ivy).dot(self.dy[Z](z_i)).dot(IZYhat)))        
+        dy[Eps] = get_coefficient(lambda z_i : DF(z_i)[:-n,Eps])
+        dy[Y] = get_coefficient(
+        lambda z_i : DF(z_i)[:-n,Y] + DF(z_i)[:-n,v].dot(Ivy).dot(self.dy[Z](z_i)).dot(IZYhat)        
         )
         
-        
-        dy[Eps] = dict_fun(
-        lambda z_i : Fhat_inv(z_i).dot(self.DF(z_i)[:-n,Eps]) + dy_dYprime(z_i).dot(dYprime[Eps])        
-        )
-        
-        dy[Y] = dict_fun(
-        lambda z_i : Fhat_inv(z_i).dot(self.DF(z_i)[:-n,Y] + self.DF(z_i)[:-n,v].dot(Ivy).dot(self.dy[Z](z_i)).dot(IZYhat)) + dy_dYprime(z_i).dot(dYprime[Y])         
-        )
-        
-        #Now do derivatives w.r.t G
-        DGi = dict_fun(lambda z_i : self.DG(z_i)[:-nG,:])
-        
-        DGhat_Y = self.integrate(
-        lambda z_i : DGi(z_i)[:,Y] + DGi(z_i)[:,y].dot(dy[Y](z_i))        
-        )
-        
-        self.dY_Eps = -np.linalg.solve(DGhat_Y,self.integrate(
-        lambda z_i : DGi(z_i)[:,Eps] + DGi(z_i)[:,y].dot(dy[Eps](z_i))          
-        ) )
-        
-        self.dy[Eps] = dict_fun(
-        lambda z_i : dy[Eps](z_i) + dy[Y](z_i).dot(self.dY_Eps)
-        )
+        #now G
+        DGi = lambda z_i : self.DG(z_i)[:-nG]
+        DG_Eps = self.integrate(lambda z_i: DGi(z_i)[:,Eps] + DGi(z_i)[:,y].dot(dy[Eps](z_i)))
+        DG_YEps = self.integrate(lambda z_i : DGi(z_i)[:,Y] + DGi(z_i)[:,y].dot(dy[Y](z_i)))
+        self.test = dy[Eps]
+        self.dY_Eps = np.linalg.solve(DG_YEps,-DG_Eps)
+        self.dy[Eps] = dict_fun(lambda z_i : dy[Eps](z_i) + dy[Y](z_i).dot(self.dY_Eps))
         
     def linearize_parameter(self):
         '''
@@ -1255,12 +1291,10 @@ class approximate(object):
         Zhat = self.dZhat_Z.dot(Zbar-self.ss.get_Y()[:nZ])
         cov_E = sigma_E.dot(sigma_E.T)
         if rank == 0:
-            r = np.random.randn()
+            r = np.random.randn(nEps)
             if not shock == None:
                 r = shock
-            r = min(3.,max(-3.,r))
-            E = r*sigma_E
-            E = np.random.multivariate_normal(np.zeros(nEps),cov_E)
+            E = sigma_E.dot(r)
         else:
             E = None
             
@@ -1305,11 +1339,9 @@ class approximate(object):
         
         def compute_ye(x):
             z_i,zbar = x
-            extreme = Para.check_extreme(z_i)
+            extreme = Para.check_extreme(z_i,self.Gamma)
             zhat = z_i-zbar
             r = np.random.randn(neps)
-            for i in range(neps):
-                r[i] = min(3.,max(-3.,r[i]))
             e = r*sigma
             Shat = np.hstack([zhat,Y1hat])
             
