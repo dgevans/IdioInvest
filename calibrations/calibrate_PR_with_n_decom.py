@@ -82,7 +82,7 @@ def F(w):
     
     
     
-    ret[4] = x_*Uc/(beta*EUc) + Uc*((1-tau_k_)*((1-xi_l)*f-delta_i*k_) - (R_-1.) *k_) + Uc*W*(1-tau_l)*nl - Uc*(c-T) - x #x
+    ret[4] = x_*Uc/(beta*EUc) + Uc*((1-tau_k_)*((1-xi_l)*f-delta_i*k_) - R_ *k_) + Uc*W*(1-tau_l)*nl - Uc*(c-T) - x #x
     ret[5] = alpha - m*Uc #rho1
     ret[6] = r -  ( (1-tau_k_)*(fk-delta_i) + 1 )#r
     ret[7] = W - fl#phi2
@@ -90,15 +90,15 @@ def F(w):
     
     #ret[9] = (Uc + Ucc*mu*(x - Uc/Ucc) - x_*Ucc*mu_/(beta*EUc) 
     #            - rho1*m*Ucc - rho2_*m_*R_*Ucc - rho3_*m_*r*Ucc - Xi )
-    ret[9] = (Uc + x_*Ucc/(beta*EUc) *(mu-mu_) +Ucc*mu*((1-tau_k_)*((1-xi_l)*f-delta_i*k_) - (R_-1.) *k_ 
-                +W-c+T-Uc/Ucc) - rho1*m*Ucc - rho2_*m_*R_*Ucc - rho3_*m_*r*Ucc - Xi  + Ucc*(1-tau_l)*phi2/Uc )
+    ret[9] = (Uc + x_*Ucc/(beta*EUc) *(mu-mu_) +Ucc*mu*((1-tau_k_)*((1-xi_l)*f-delta_i*k_) - R_ *k_ 
+                +W*(1-tau_l)*nl-c+T-Uc/Ucc) - rho1*m*Ucc - rho2_*m_*(1+R_)*Ucc - rho3_*m_*r*Ucc - Xi  + Ucc*(1-tau_l)*phi2/Uc )
                 
     ret[10] = (Uc*mu*(1-tau_k_)*(1-xi_l)*fl  - rho3_*m_*(1-tau_k_)*flk*Uc  - phi*fll - Eta + fl*Xi)
-    ret[11] = foc_k - ( mu*Uc*( (1-tau_k_)*((1-xi_l)*fk-delta_i) -(R_-1)) - rho3_*m_*(1-tau_k_)*fkk*Uc
+    ret[11] = foc_k - ( mu*Uc*( (1-tau_k_)*((1-xi_l)*fk-delta_i) -R_) - rho3_*m_*(1-tau_k_)*fkk*Uc
                         -phi*flk - Xi_/beta + (fk + 1 - delta_i)*Xi ) #fock
     ret[12] = rho1_ + rho2_ + rho3_
     ret[13] = res - (f +(1-delta_i)*k_ - c - Gov - k)
-    ret[14] = foc_R_ - (k_*EUc_mu - rho2_*m_*EUc)
+    ret[14] = foc_R_ - (k_*EUc_mu + rho2_*m_*EUc)
     ret[15] = (1-tau_l) + Un/(W*Uc)
     ret[16] = Un + Unn/(W*Uc)*phi2 + mu*Uc*W*(1-tau_l) + Eta
     ret[17] = alpha_ - Alpha_
@@ -106,20 +106,20 @@ def F(w):
     ret[19] = Efoc_tau_k - hatEfoc_tau_k
     ret[20] = xi - Xi
     ret[21] = dk_dtau_k_ - ( EUcfk/((1-tau_k_)*EUcfkk) )
-    ret[22] = tR_khat - mu*Uc*((1-xi_l)*f - delta_i*k_ - dk_dtau_k_ *( (1-tau_k_)*((1-xi_l)*fk-delta_i) - (R_-1)  ) )*(1-tau_k_)/((R_-1)*dK_dtau_k_*EXi)
-    ret[23] = tW_khat - (dk_dtau_k_ * flk * phi) *(1-tau_k_)/((R_-1)*dK_dtau_k_*EXi)
+    ret[22] = tR_khat - mu*Uc*((1-xi_l)*f - delta_i*k_ - dk_dtau_k_ *( (1-tau_k_)*((1-xi_l)*fk-delta_i) - R_  ) )*(1-tau_k_)/(R_*dK_dtau_k_*EXi)
+    ret[23] = tW_khat - (dk_dtau_k_ * flk * phi) *(1-tau_k_)/(R_*dK_dtau_k_*EXi)
     ret[24] = tR_k - EtR_k
     ret[25] = tW_k - EtW_k
     ret[26] = dnl_dtau - ( -Un/((1-tau_l)*Unn) )
     ret[27] = tR_l  + ((1-tau_l)*W*mu*Uc*dnl_dtau -W*nl*Uc*mu)/dUc_dtau_l#+ (mu*Uc*w_e*W*(dl_dtau*(1-tau_l) - l)/dUc_dtau_l)
     ret[28] = tE_l - ((dnl_dtau*W*(Uc-Xi))/dUc_dtau_l)
-    ret[29] = A - np.exp(nu_a + eps_t+Eps)
+    ret[29] = A - np.exp((1-Eps)*nu_a + eps_t)
     
     # xi,dk_dtau_k_, tR_khat,tW_khat, dnl_tau, tR_l, tE_l
     
     ret[30] = Efoc_k #k_
     ret[31] = mu_  - EUc_mu/EUc 
-    ret[32] = Alpha_ - beta*R_*m_*EUc #rho2_
+    ret[32] = Alpha_ - beta*(1+R_)*m_*EUc #rho2_
     ret[33] = Alpha_ - beta*m_*EUc_r #rho3
     
     return ret
@@ -247,7 +247,7 @@ def Finv(YSS,z):
     f =  A*k_**(xi_k) * l**xi_l
     
     
-    x_ = -( Uc*((1-tau_k)*((1-xi_l)*f-delta_i*k_) - (R_-1.) *k_) +Uc*(1-tau_l)*W*nl - Uc*(c-T) )/(1/beta-1)
+    x_ = -( Uc*((1-tau_k)*((1-xi_l)*f-delta_i*k_) - R_ *k_) +Uc*(1-tau_l)*W*nl - Uc*(c-T) )/(1/beta-1)
         
     phi2 = -(Un + mu*Uc*W*(1-tau_l) + Eta)*W*Uc/Unn
     
@@ -255,15 +255,15 @@ def Finv(YSS,z):
     
     phi = (Uc*mu*(1-tau_k)*(1-xi_l)*fl - rho3*m*(1-tau_k)*flk*Uc - Eta + fl *Xi)/fll
     
-    rho1 = (Uc +Ucc*mu*((1-tau_k)*((1-xi_l)*f-delta_i*k_) + k_ - R_ *k_ 
-                +W-c+T-Uc/Ucc) - Xi + Ucc*(1-tau_l)*phi2/Uc)/(m*Ucc*(1-1/beta))
+    rho1 = (Uc +Ucc*mu*((1-tau_k)*((1-xi_l)*f-delta_i*k_) -R_*k_ 
+                +W*(1-tau_l)*nl-c+T-Uc/Ucc) - Xi + Ucc*(1-tau_l)*phi2/Uc)/(m*Ucc*(1-1/beta))
     
     rho2 = - rho1 - rho3
     
-    foc_R = k_*Uc*mu - rho2*m*Uc
+    foc_R = k_*Uc*mu + rho2*m*Uc
     
     
-    foc_k = ( mu*Uc*( (1-tau_k)*((1-xi_l)*fk-delta_i) + 1 - R_) - rho3*m*(1-tau_k)*fkk*Uc
+    foc_k = ( mu*Uc*( (1-tau_k)*((1-xi_l)*fk-delta_i) -R_) - rho3*m*(1-tau_k)*fkk*Uc
                         -phi*flk - Xi/beta + (fk + 1 - delta_i)*Xi )
                 
     res = (f + (1-delta_i)*k_ - c - Gov - k_)
@@ -272,8 +272,8 @@ def Finv(YSS,z):
     
     xi = Xi*np.ones(c.shape)
     dk_dtau_k_ = ( (fk-delta_i)/((1-tau_k)*fkk) )
-    tR_k = mu*Uc*((1-xi_l)*f - delta_i*k_ - dk_dtau_k_ *( (1-tau_k)*((1-xi_l)*fk-delta_i) - (R_-1)  ) )*(1-tau_k)/((R_-1)*dK_dtau_k_*Xi)
-    tW_k = (dk_dtau_k_ * flk * phi) *(1-tau_k)/((R_-1)*dK_dtau_k_*Xi)
+    tR_k = mu*Uc*((1-xi_l)*f - delta_i*k_ - dk_dtau_k_ *( (1-tau_k)*((1-xi_l)*fk-delta_i) - R_  ) )*(1-tau_k)/((R_)*dK_dtau_k_*Xi)
+    tW_k = (dk_dtau_k_ * flk * phi) *(1-tau_k)/((R_)*dK_dtau_k_*Xi)
     dnl_dtau = ( -Un/((1-tau_l)*Unn) )
     tR_l  = -((1-tau_l)*W*mu*Uc*dnl_dtau -W*nl*Uc*mu)/dUc_dtau_l#+ (mu*Uc*w_e*W*(dl_dtau*(1-tau_l) - l)/dUc_dtau_l)
     tE_l = ((dnl_dtau*W*(Uc-Xi))/dUc_dtau_l)
@@ -300,7 +300,7 @@ def GSS(YSS,y_i,weights):
     Uc = c**(-sigma)    
     
     return np.hstack(
-    [weights.dot(K - k_), weights.dot(res), weights.dot(nl - l), weights.dot( Efoc_tau_k), R_-1/beta,
+    [weights.dot(K - k_), weights.dot(res), weights.dot(nl - l), weights.dot( Efoc_tau_k), R_-(1/beta-1),
      weights.dot(mu*Uc*(1-tau_l)*nl + phi + phi2*(1-tau_l)/W), weights.dot(foc_R_), weights.dot(-mu*Uc*nl*W  - phi2),T-Gov,
      weights.dot(dK_dtau_k_ - dk_dtau_k_),weights.dot(dUc_dtau_l - dnl_dtau*W*Uc),weights.dot(TR_k - tR_k),
     weights.dot(TW_k - tW_k),weights.dot( TR_l - tR_l),weights.dot(TE_l - tE_l)
@@ -321,15 +321,16 @@ def nomalize(Gamma,weights =None):
         Gamma[:,1] -= weights.dot(Gamma[:,1])
     return Gamma
     
-def check_extreme(z_i):
+def check_extreme(z_i,Gamma):
     '''
     Checks for extreme positions in the state space
     '''
-    return False
+    std1 = np.std(Gamma[:,0])
+    std2 = np.std(Gamma[:,1])
     extreme = False
-    if z_i[0] < -3. or z_i[0] > 6.:
+    if z_i[0] < -3*std1 or z_i[0] > 3*std1:
         extreme = True
-    if z_i[1] > 8. or z_i[1] < -5.:
+    if z_i[1] > 3*std2 or z_i[1] < -3 *std2:
         extreme = True
     return extreme
     

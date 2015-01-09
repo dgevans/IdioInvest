@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_PR_no_deduct_decom as Para
+import calibrations.calibrate_PR_with_n_decom as Para
 import approximate
 import numpy as np
 import simulate_MPI as simulate
@@ -56,7 +56,7 @@ def run_rho_experiment():
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15_no_deduct_decom.dat','wr')
+            fout = open('pers15_deduct_decom.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             
@@ -87,7 +87,7 @@ def run_rho_experiment_agg():
         simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15_no_deduct_decom_tfp.dat','wr')
+            fout = open('pers15_deduct_decom_tfp.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             
@@ -238,4 +238,4 @@ def run_rho_experiment_ce():
             
 run_rho_experiment()
 run_rho_experiment_agg()
-run_long_simulation()
+#run_long_simulation()
