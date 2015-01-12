@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_PR_with_n_decom as Para
+import calibrations.calibrate_PR_no_deduct_decom_decom as Para
 import approximate
 import numpy as np
 import simulate_MPI as simulate
@@ -24,7 +24,7 @@ def get_stdev(rho):
     std_iid = np.sqrt(var_a*(1-frac))
     return [std_pers,std_iid]
     
-T = 202
+T = 302
 N = 151*64*2
 Para.k = 64*4
 
@@ -35,7 +35,7 @@ state = np.random.get_state()
 def run_rho_experiment():
     if rank == 0:
         utilities.sendMessage('Starting Persistence')
-    for rho in np.linspace(0.,0.6,8):
+    for rho in np.linspace(0.,0.8,8):
         if rank ==0:
             utilities.sendMessage(str(rho))
             print rho
@@ -53,7 +53,11 @@ def run_rho_experiment():
         ss = steadystate.steadystate(zip(np.zeros((1,3)),np.ones(1)))
         Z[0] = ss.get_Y()[:2]
         
-        simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
+        try:
+            simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
+        except Exception as E:
+            utilities.sendMessage(E.message)
+            raise E
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
             fout = open('pers15_deduct_decom.dat','wr')
@@ -66,7 +70,7 @@ def run_rho_experiment():
 def run_rho_experiment_agg():
     if rank == 0:
         utilities.sendMessage('Starting Agg Persistence')
-    for rho in np.linspace(0.,0.6,8):
+    for rho in np.linspace(0.,0.8,8):
         if rank ==0:
             utilities.sendMessage(str(rho))
             print rho
@@ -84,7 +88,11 @@ def run_rho_experiment_agg():
         ss = steadystate.steadystate(zip(np.zeros((1,3)),np.ones(1)))
         Z[0] = ss.get_Y()[:2]
         
-        simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
+        try:
+            simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
+        except Exception as E:
+            utilities.sendMessage(E.message)
+            raise E
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
             fout = open('pers15_deduct_decom_tfp.dat','wr')
@@ -98,7 +106,7 @@ def run_frict_experiment():
     if rank ==0:
         utilities.sendMessage('Starting Financial Frictions')
         
-    for rho in np.linspace(0.0,0.6,8):
+    for rho in np.linspace(0.0,0.8,8):
         if rank ==0:
             utilities.sendMessage(str(rho))
             print rho
@@ -238,4 +246,4 @@ def run_rho_experiment_ce():
             
 run_rho_experiment()
 run_rho_experiment_agg()
-#run_long_simulation()
+

@@ -299,7 +299,7 @@ class approximate(object):
         global dY_Z0
         def f(dY_Z):
             return self.dY_Z_residual(dY_Z.reshape(nY,nZ)).flatten()
-        
+        n = 0.
         while True:
             if rank == 0:
                 if dY_Z0 == None:
@@ -316,6 +316,10 @@ class approximate(object):
                 dY_Z0 = None
             except:
                 dY_Z0 = None
+                
+            n+= 1
+            if n > 20:
+                raise Exception('Could not find dY_Z')
             
                 
         dY_Z = res.x.reshape(nY,nZ)
