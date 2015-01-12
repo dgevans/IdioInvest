@@ -47,11 +47,11 @@ class steadystate(object):
         Solve for the steady state
         '''
         global Y0
-        res = root(self.SteadyStateRes,Y0,tol = 1e-14)
+        res = root(self.SteadyStateRes,Y0)
         state = np.random.get_state()
         n_it = 0
         while not res.success or not check_SS(res.x):
-            res = root(self.SteadyStateRes,np.random.rand(nY),tol=1e-14)
+            res = root(self.SteadyStateRes,np.random.rand(nY))
             n_it += 1
             if n_it > 500:
                 raise Exception('Could not find Steady State')
