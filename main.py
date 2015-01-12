@@ -57,6 +57,9 @@ def run_rho_experiment():
             simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         except Exception as E:
             utilities.sendMessage(E.message)
+            fout = file('error.dat','wr')
+            cPickle.dump((Gamma,Z,Y),fout)
+            fout.close()
             raise E
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
@@ -92,6 +95,9 @@ def run_rho_experiment_agg():
             simulate.simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T)
         except Exception as E:
             utilities.sendMessage(E.message)
+            fout = file('error.dat','wr')
+            cPickle.dump((Gamma,Z,Y),fout)
+            fout.close()
             raise E
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])

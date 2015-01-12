@@ -53,7 +53,7 @@ class steadystate(object):
         while not res.success or not check_SS(res.x):
             res = root(self.SteadyStateRes,np.random.rand(nY),tol=1e-14)
             n_it += 1
-            if n_it > 20:
+            if n_it > 500:
                 raise Exception('Could not find Steady State')
         np.random.set_state(state)
         

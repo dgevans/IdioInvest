@@ -318,7 +318,7 @@ class approximate(object):
                 dY_Z0 = None
                 
             n_it += 1
-            if n_it > 20:
+            if n_it > 500:
                 raise Exception('Could not find dY_Z')
             
                 
