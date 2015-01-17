@@ -7,18 +7,18 @@ Created on Thu Apr 17 12:18:27 2014
 import numpy as np
 import pycppad as ad
 
-beta = 0.96
+beta = 0.97
 sigma = 1.5
 gamma = 2.
 #sigma_e = np.array([0.04,0.05,0.1,0.05])
 sigma_e = np.array([0.0,0.03])
 sigma_E = 0.0*np.eye(1)
 mu_a = 0.
-Delta = 0.06
+Delta = 0.04
 xi_l = 0.66*(1-0.21) #*.75
 xi_k = 0.34*(1-0.21) #*.75
 
-Gov = 0.17
+Gov = 0.32
 
 
 

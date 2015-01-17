@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import steadystate
-import calibrations.calibrate_PR_no_deduct_decom_decom as Para
+import calibrations.calibrate_PR_no_deduct_decom as Para
 import approximate
 import numpy as np
 import simulate_MPI as simulate
@@ -14,7 +14,7 @@ simulate.approximate = approximate
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
-var_a =  0.10622#np.log(1+1/2.67)
+var_a =  0.1#np.log(1+1/2.67)
 #Para.mu_a = -var_a/2
 corr_pers = 0.99
 
@@ -63,7 +63,7 @@ def run_rho_experiment():
             raise E
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15_deduct_decom.dat','wr')
+            fout = open('pers15_deduct_decom_new.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             
@@ -101,7 +101,7 @@ def run_rho_experiment_agg():
             raise E
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15_deduct_decom_tfp.dat','wr')
+            fout = open('pers15_deduct_decom_new_tfp.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             
