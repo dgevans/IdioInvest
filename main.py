@@ -14,7 +14,7 @@ simulate.approximate = approximate
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
-var_a =  0.1#np.log(1+1/2.67)
+var_a =  0.11#np.log(1+1/2.67)
 #Para.mu_a = -var_a/2
 corr_pers = 0.99
 
@@ -35,7 +35,7 @@ state = np.random.get_state()
 def run_rho_experiment():
     if rank == 0:
         utilities.sendMessage('Starting Persistence')
-    for rho in np.linspace(0.,0.8,8):
+    for rho in np.linspace(0.1,0.8,6):
         if rank ==0:
             utilities.sendMessage(str(rho))
             print rho
@@ -73,7 +73,7 @@ def run_rho_experiment():
 def run_rho_experiment_agg():
     if rank == 0:
         utilities.sendMessage('Starting Agg Persistence')
-    for rho in np.linspace(0.,0.8,8):
+    for rho in np.linspace(0.1,0.8,6):
         if rank ==0:
             utilities.sendMessage(str(rho))
             print rho
