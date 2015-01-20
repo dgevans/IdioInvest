@@ -7,16 +7,16 @@ Created on Thu Apr 17 12:18:27 2014
 import numpy as np
 import pycppad as ad
 
-beta = 0.96
+beta = 0.97
 sigma = 1.5
 gamma = 2.
 #sigma_e = np.array([0.04,0.05,0.1,0.05])
 sigma_e = np.array([0.0,0.03])
 sigma_E = 0.0*np.eye(1)
 mu_a = 0.
-Delta = 0.06
-xi_l = 0.66*(1-0.21) #*.75
-xi_k = 0.34*(1-0.21) #*.75
+Delta = 0.04
+xi_l = 0.66*(1-0.19) #*.75
+xi_k = 0.34*(1-0.19) #*.75
 
 Gov = 0.17
 
@@ -98,7 +98,7 @@ def F(w):
                         -phi*flk - Xi_/beta + (fk + 1 - delta_i)*Xi ) #fock
     ret[12] = rho1_ + rho2_ + rho3_
     ret[13] = res - (f +(1-delta_i)*k_ - c - Gov - k)
-    ret[14] = foc_R_ - (k_*EUc_mu - rho2_*m_*EUc)
+    ret[14] = foc_R_ - (k_*EUc_mu + rho2_*m_*EUc)
     ret[15] = (1-tau_l) + Un/(W*Uc)
     ret[16] = Un + Unn/(W*Uc)*phi2 + mu*Uc*W*(1-tau_l) + Eta
     ret[17] = alpha_ - Alpha_
@@ -260,7 +260,7 @@ def Finv(YSS,z):
     
     rho2 = - rho1 - rho3
     
-    foc_R = k_*Uc*mu - rho2*m*Uc
+    foc_R = k_*Uc*mu + rho2*m*Uc
     
     
     foc_k = ( mu*Uc*( (1-tau_k)*((1-xi_l)*fk+1-delta_i) - R_) - rho3*m*(1-tau_k)*fkk*Uc
@@ -321,15 +321,16 @@ def nomalize(Gamma,weights =None):
         Gamma[:,1] -= weights.dot(Gamma[:,1])
     return Gamma
     
-def check_extreme(z_i):
+def check_extreme(z_i,Gamma):
     '''
     Checks for extreme positions in the state space
     '''
-    return False
+    std1 = np.std(Gamma[:,0])
+    std2 = np.std(Gamma[:,1])
     extreme = False
-    if z_i[0] < -3. or z_i[0] > 6.:
+    if z_i[0] < -3.5*std1 or z_i[0] > 3.5*std1:
         extreme = True
-    if z_i[1] > 8. or z_i[1] < -5.:
+    if z_i[1] > 3.5*std2 or z_i[1] < -3.5 *std2:
         extreme = True
     return extreme
     
