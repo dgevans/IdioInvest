@@ -35,7 +35,7 @@ state = np.random.get_state()
 def run_rho_experiment():
     if rank == 0:
         utilities.sendMessage('Starting Persistence')
-    for rho in np.linspace(0.1,0.8,6):
+    for rho in np.linspace(0.1,0.9,8):
         if rank ==0:
             utilities.sendMessage(str(rho))
             print rho
@@ -63,7 +63,7 @@ def run_rho_experiment():
             raise E
         if rank == 0:    
             data[rho] = (np.vstack(Y.values()),[y[t][:5000] for t in range(0,T,50)])
-            fout = open('pers15_deduct_decom_new.dat','wr')
+            fout = open('pers_rho.dat','wr')
             cPickle.dump((state,data),fout)
             fout.close()
             
@@ -251,5 +251,5 @@ def run_rho_experiment_ce():
         utilities.sendMessage('Finished Persistence')
             
 run_rho_experiment()
-run_rho_experiment_agg()
+#run_rho_experiment_agg()
 

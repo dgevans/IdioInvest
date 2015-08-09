@@ -311,18 +311,18 @@ class approximate(object):
                 res = root(f,dY_Z0)
                 if res.success:
                     lamb =  np.linalg.eigvals(res.x.reshape(nY,nZ)[:nZ])
+                    print lamb
                     if np.max(np.abs(lamb)) <1 and all(np.isreal(lamb)) :
                         break
                 dY_Z0 = None
             except:
-                dY_Z0 = None
-                
+                dY_Z0 = None 
             n_it += 1
             if n_it > 500:
                 raise Exception('Could not find dY_Z')
             
-                
         dY_Z = res.x.reshape(nY,nZ)
+        dY_Z = np.round(dY_Z,14) 
         dY_Z0 = res.x
         #Now change the basis so that dZ_Z is diagonal
         global IZYhat

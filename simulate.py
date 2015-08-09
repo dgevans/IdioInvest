@@ -104,7 +104,11 @@ def simulate_aggstate(Para,Gamma,Z,Y,Shocks,y,T,T0=0,quadratic = True):
     t = T0+1
     while t< T:
         Gamma[t],Z[t],Y[t-1], Shocks[t-1],y[t-1]= update_state_parallel_aggstate(Para,Gamma[t-1],Z[t-1],quadratic)
-        print t,np.exp(Z[t]),Y[t-1][5:7]
+        print t,np.exp(Z[t]),Y[t-1][2]
+        std1 = np.std(Gamma[t][:,0])
+        std2 = np.std(Gamma[t][:,1])
+        test = (Gamma[t][:,0] >= -3*std1)*(Gamma[t][:,0] <= 3*std1)*(Gamma[t][:,1] >= -3*std2)*(Gamma[t][:,1] <= 3*std2)
+        print test.mean()
         t += 1
     
 def update_state_parallel_aggstate(Para,Gamma,Z,quadratic = True):
@@ -115,6 +119,8 @@ def update_state_parallel_aggstate(Para,Gamma,Z,quadratic = True):
     v['Gamma'] = Gamma
     v['Z'] = Z
     v.execute('approx = approximate.approximate(Gamma)')
+    v.execute('temp = approx.dY_Eps[:2]')
+    print v['temp'][0]
     #v.execute('approxes.append(approx)')
     diff = np.inf
     n = 0.
